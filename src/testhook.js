@@ -53,8 +53,6 @@ export function installTestHook(g) {
       const info = g.info;
       if (!info?.me) return;
       const keys = ['w', 'a', 's', 'd'];
-      const held = g.player;
-      void held;
       if (step % 9 === 0) {
         const k = keys[Math.floor(Math.random() * 4)];
         window.dispatchEvent(new KeyboardEvent('keydown', { key: k }));

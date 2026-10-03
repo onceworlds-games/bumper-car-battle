@@ -255,12 +255,11 @@ export function createScreens(root) {
         'tap',
         (ov) => {
           ov.className = 'tapcover';
-          const b = button(ov, 'Tap to play', 'big', onTap);
+          button(ov, 'Tap to play', 'big', onTap);
           ov.addEventListener('pointerdown', (e) => {
             e.stopPropagation();
             onTap();
           });
-          void b;
         },
         { dim: false },
       );

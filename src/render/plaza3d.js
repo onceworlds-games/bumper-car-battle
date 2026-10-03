@@ -315,7 +315,6 @@ function quay(kit, mats, plaza, scene, extra) {
 }
 
 function palazzo(kit, mats, plaza, scene, extra) {
-  const rnd = prng(303);
   // The palace on every side: a tall north front behind the terrace, wings east and west, a wall with a gate south.
   kit.house(mats, 0xead2a8, 0, -27, 50, 10, 17, 0, { flat: true, chimney: false });
   kit.house(mats, 0xe8b46a, -27, 0, 46, 10, 13, Math.PI / 2, { flat: false, chimney: false });
@@ -327,7 +326,6 @@ function palazzo(kit, mats, plaza, scene, extra) {
   kit.box(mats.plain, 0xd8b98e, 2.8, 0, 19.5, 1.2, 7, 3.2);
   kit.box(mats.plain, 0xd8b98e, 0, 5.2, 19.5, 6.8, 1.8, 3.2);
   kit.box(mats.plain, IRON, 0, 0, 20.6, 4.4, 5, 0.12);
-  void rnd;
   // The terrace: solid stone with a balustrade, three stairs, and its own loggia of columns.
   kit.box(mats.plain, 0xc9b79a, 0, 0, -17, 44, 2.4, 10);
   kit.box(mats.plain, 0xb8a585, 0, 0, -12.05, 44, 2.4, 0.1);

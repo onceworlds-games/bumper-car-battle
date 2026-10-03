@@ -1,11 +1,10 @@
 // A match on screen: the round view, the HUD, the cards for each moment (assignment, Powder Room, results, podium),
 // banners and the Master's cues, music, the heartbeat, the fireworks' booms, rings on the stones, name tags, the map,
 // the verbs, and crediting each round once.
-import { stage as stageOf, standings, awards as awardsOf, isOut } from '../sim/rules.js';
-import { TROUPES, ABILITIES, UNMASK, GREET, ABILITY_IDS, SEEN } from '../sim/const.js';
+import { standings, awards as awardsOf, isOut } from '../sim/rules.js';
+import { TROUPES, ABILITIES, UNMASK, GREET, ABILITY_IDS } from '../sim/const.js';
 import { floorY, PLAZAS } from '../sim/plazas.js';
 import { EM } from '../sim/choreo.js';
-import { STRIDE } from '../sim/crowd.js';
 import { blocked } from './player.js';
 import { projected } from './round.js';
 import { BARKS } from './events.js';
@@ -149,7 +148,7 @@ export function createMatchUI(d) {
       const g = session.game;
       // ---- stage changes: banners, the bell, music ----
       if (st !== lastStage) {
-        onStage(st, lastStage, r, info, ctx);
+        onStage(st, r, info, ctx);
         lastStage = st;
       }
       const u = Math.max(0, Math.min(1, (t - r.timing.huntStart) / Math.max(1, r.timing.hushStart - r.timing.huntStart)));
@@ -172,7 +171,7 @@ export function createMatchUI(d) {
         if (!want) screens.close();
         else if (want === 'assign') card = openAssign(r, me);
         else if (want === 'powder') card = screens.powder({ seconds: rs.out - t });
-        else if (want === 'results') card = openResults(r, t);
+        else if (want === 'results') card = openResults(r);
         else if (want === 'final') card = openFinal(g);
       }
       if (card?.tick) {
@@ -315,7 +314,7 @@ export function createMatchUI(d) {
     return { tr: q.tr, name: q.nm, where: `a ${TROUPES[q.tr].name}`, where2: ago >= 0 ? `by ${plaza.districts[q.d].name} · ${ago}s` : info.st === 'hunt' ? 'Clue soon' : 'Clue at the hunt', clock };
   }
 
-  function onStage(st, prev, r, info, ctx) {
+  function onStage(st, r, info, ctx) {
     const playing = !!info.me && !ctx.spectate;
     if (st === 'blend' && playing) {
       hud.banner('Blend', 'find your place');
@@ -333,7 +332,6 @@ export function createMatchUI(d) {
     } else if (st === 'reveal') {
       hud.banner('Masks off!', '', 1800);
     }
-    void prev;
   }
 
   function openAssign(r, me) {
@@ -361,13 +359,12 @@ export function createMatchUI(d) {
     return (BANNERS[i] ?? BANNERS[0]).colors;
   }
 
-  function openResults(r, t) {
+  function openResults(r) {
     const sc = session.scores;
     const rows = standings(sc, Object.keys(r.m)).map((row) => ({ ...row, name: r.m[row.id].nm, bot: !!r.m[row.id].b, tr: r.m[row.id].tr, unm: sc[row.id]?.unm ?? 0, me: row.id === session.me, banner: bannerOf(row.id, !!r.m[row.id].b) }));
     const g = session.game;
     const last = g && g.n >= g.rounds;
     const solved = r.case?.solved;
-    void t;
     return screens.results({ title: r.mode === 'spot' ? (solved ? 'Case closed' : 'They slipped away') : rows[0] ? `${rows[0].name} leads` : 'Midnight', sub: `Round ${r.n}`, rows, nextLabel: last ? 'The podium' : 'Next round' });
   }
 
@@ -391,8 +388,5 @@ export function createMatchUI(d) {
   }
 
   ui.isOut = (r, id, t) => isOut({ r, rs: session.status }, id, t);
-  void stageOf;
-  void SEEN;
-  void STRIDE;
   return ui;
 }

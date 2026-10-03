@@ -70,7 +70,7 @@ export function runPoster(kind) {
       // Heads turn to the commotion.
       if (!attention.length) attention.push({ x: -1.2, z: 1.6, r: 6, tx: -1.2, tz: 1.6, t: 0, dur: 99, age: 2, up: 0.1 });
     }
-    drawFigures(stage, { time: 3 + time, crowd, buf, skip: skipFor(crowd, maskers), plaza, maskers, attention, cam: null, turnDelay: () => 0 });
+    drawFigures(stage, { time: 3 + time, crowd, buf, skip: null, plaza, maskers, attention, cam: null, turnDelay: () => 0 });
     if (sc.unmask && frames === 14) {
       stage.fx.confetti(-1.2, floorY(plaza, -1.2, 1.6) + 1.7, 1.6, [0xf2b544, 0xb3263a, 0x1f7a80, 0xf1e3c8, 0xe58c8a], 120);
       stage.fx.dropMask(-1.2, 1.62, 1.6, -0.9, TROUPES[4].mask);
@@ -97,12 +97,6 @@ export function runPoster(kind) {
   requestAnimationFrame(loop);
 }
 
-function skipFor(crowd, maskers) {
-  // Maskers here stand where no reveller is, so nothing needs hiding.
-  void crowd;
-  void maskers;
-  return null;
-}
 
 function paintedFace(seed) {
   const [c, g] = makeCanvas(96);

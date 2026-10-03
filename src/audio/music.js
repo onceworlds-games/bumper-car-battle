@@ -33,7 +33,6 @@ export function createMusic() {
   let tempo = 62;
   let tune = makeTune(1);
   let tuneSeed = 1;
-  let lastNote = 69;
   const m = {
     /** mode: 'off' | 'lobby' | 'blend' | 'hunt' | 'hush' | 'results'; u: 0..1 through the hunt. */
     set(nextMode, u = 0, seed = tuneSeed) {
@@ -87,7 +86,6 @@ export function createMusic() {
       for (const n of notes) {
         if (n.pos !== pos) continue;
         const len = (n.len * 60) / tempo / 3;
-        lastNote = n.midi;
         if (n.len >= 3 && !late) {
           // Mandolin tremolo on the long notes.
           const reps = Math.floor(len / 0.075);
@@ -98,7 +96,6 @@ export function createMusic() {
     // Tambourine.
     if (intensity > 0.6 && (pos === 0 || pos === 3)) inst.noise(t, 0.12, 7000, 1.2, 0.05 + intensity * 0.04, 'music', 'highpass', 0.1);
     if (intensity > 0.8 && pos % 3 === 2) inst.noise(t, 0.06, 8000, 1, 0.03, 'music', 'highpass', 0.05);
-    void lastNote;
   }
   return m;
 }

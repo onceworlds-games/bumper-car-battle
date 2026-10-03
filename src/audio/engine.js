@@ -267,11 +267,10 @@ export const inst = {
     inst.tone(t, 70, 42, 0.16, vel, 'sine', 'sfx', 0);
     inst.tone(t + 0.22, 62, 40, 0.14, vel * 0.7, 'sine', 'sfx', 0);
   },
-  boom(t, vel = 0.5, pan = 0) {
+  boom(t, vel = 0.5) {
     if (!ctx) return;
     inst.tone(t, 110, 32, 0.9, vel, 'sine', 'sfx', 0.6);
     inst.noise(t, 0.6, 600, 0.5, vel * 0.7, 'sfx', 'lowpass', 0.6, 0.3);
     for (let i = 0; i < 9; i++) inst.noise(t + 0.25 + Math.random() * 0.9, 0.04, 3000 + Math.random() * 3000, 2, vel * 0.18, 'sfx', 'bandpass', 0.4);
-    void pan;
   },
 };

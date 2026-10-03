@@ -3,11 +3,11 @@
 // with a skill-scaled chance, lose track in a crowd, and sometimes misread the choreography. Never secret knowledge.
 import { hash32, rng } from './rng.js';
 import { POISE, UNMASK, GREET, SEEN, ABILITIES, TROUPES, WALK } from './const.js';
-import { PLAZAS, districtAt } from './plazas.js';
+import { districtAt } from './plazas.js';
 import { lineOfSight, walkPath } from './nav.js';
 import { STRIDE } from './crowd.js';
 import { makeMover, stepMover, followPath } from './move.js';
-import { quarryOf, isOut, stage, smokeBetween, FLAG } from './rules.js';
+import { isOut, stage, smokeBetween, FLAG } from './rules.js';
 import { dist, wrap } from './geom.js';
 
 export const SKILL = {
