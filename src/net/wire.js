@@ -178,8 +178,9 @@ export function readIntel(v) {
 export function readRef(v, r) {
   if (!isObj(v) || !r) return null;
   if (v.k === 'n') {
-    const s = int(v.s, -1, TROUPES.length * r.crowd - 1, -1);
-    return s < 0 ? null : { k: 'n', s };
+    // A slot that doesn't exist is refused, never clamped onto one that does.
+    const s = v.s;
+    return Number.isInteger(s) && s >= 0 && s < TROUPES.length * r.crowd ? { k: 'n', s } : null;
   }
   if (v.k === 'p' && id(v.id) && r.m[v.id]) return { k: 'p', id: v.id };
   if (v.k === 'd' && typeof v.id === 'string' && v.id.length < 24) return { k: 'd', id: v.id };
