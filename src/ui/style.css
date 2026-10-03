@@ -637,6 +637,37 @@ body {
   opacity: 0.35;
   cursor: default;
 }
+.xp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 0;
+  font: 700 14px/1 var(--ui);
+  color: var(--print);
+}
+.xp b {
+  font: italic 700 17px/1 var(--display);
+  color: var(--print-red);
+}
+.xp em {
+  font-style: normal;
+  letter-spacing: 0.06em;
+  color: var(--print-soft);
+}
+.xp .bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(36, 26, 23, 0.14);
+  overflow: hidden;
+}
+.xp .bar i {
+  display: block;
+  height: 100%;
+  background: var(--print-red);
+  transform-origin: left;
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
 .tells {
   display: flex;
   flex-wrap: wrap;

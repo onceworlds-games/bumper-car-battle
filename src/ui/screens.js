@@ -191,13 +191,27 @@ export function createScreens(root) {
           el('td', '', tr, r.unm ? `${r.unm} unmasked` : '');
           el('td', '', tr, String(r.pts));
         }
+        const xp = el('div', 'xp', card);
+        xp.style.display = 'none';
         const f = el('div', 'caps next', card);
         f.dataset.next = '1';
       });
       const f = o.querySelector('[data-next]');
+      const xpRow = o.querySelector('.xp');
       return {
         tick(sec) {
           if (f) f.textContent = `${nextLabel || 'Next'} in ${Math.max(0, Math.ceil(sec))}`;
+        },
+        /** What the round earned you: level, how far to the next, and the points. info: { level, into, need, xp } */
+        xp(info) {
+          if (!xpRow || !info) return;
+          xpRow.style.display = '';
+          xpRow.replaceChildren();
+          el('b', '', xpRow, `Level ${info.level}`);
+          const bar = el('span', 'bar', xpRow);
+          const fill = el('i', '', bar);
+          fill.style.transform = `scaleX(${info.need ? Math.max(0, Math.min(1, info.into / info.need)) : 1})`;
+          el('em', '', xpRow, `+${info.xp} xp`);
         },
       };
     },

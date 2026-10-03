@@ -19,6 +19,7 @@ export function createHost(room, hooks = {}) {
   let lastRs = 0;
   let lastFast = 0;
   let lastHb = 0;
+  let lastEnd = -9999;
   const hb = new Map();
   const idleSince = new Map();
   const pace = new Map();
@@ -376,7 +377,11 @@ export function createHost(room, hooks = {}) {
       if (!W || !safe(() => room.running, false)) return;
       const now = room.matchNow();
       if (G.fin) {
-        if (now >= G.fin) safe(() => room.endMatch(), null, 'endMatch');
+        // Asked once in a while, not every frame, until the room has taken the match to its lobby.
+        if (now >= G.fin && performance.now() - lastEnd > 2000) {
+          lastEnd = performance.now();
+          safe(() => room.endMatch(), null, 'endMatch');
+        }
         return;
       }
       const t = (now - G.t0) / 1000;

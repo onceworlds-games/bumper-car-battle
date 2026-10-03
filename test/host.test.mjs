@@ -56,7 +56,10 @@ function hub(ids = IDS, over = {}) {
     },
     privateOf: (who) => H.priv[who],
     send: (data, opts) => H.sent.push({ from: id, to: opts?.to ?? null, data }),
-    endMatch: () => H.ended++,
+    endMatch: () => {
+      H.ended++;
+      H.match = { ...H.match, phase: 'lobby' };
+    },
     admit: () => {},
     get private() {
       return H.priv[id];
@@ -276,4 +279,37 @@ test('a greeted player cannot claim a quicker answer than the host saw', () => {
   host.onMessage({ t: 'an', rid, g: g2.q, d: 0.8 }, { id: 'p2' }, H.clock);
   run(H, host, 0.3);
   assert.equal(W.S.ev.find((e) => e.k === 'answer' && e.g === g2.q).v, 'ok');
+});
+
+test('a new host takes over in the Hush, at the results and on the podium without a restart', () => {
+  const H = hub(['p0', 'p1'], { settings: { mode: 'masq', rounds: 1, length: 3, crowd: 'light', loadout: 'standard', bots: 'novice' } });
+  let host = createHost(H.page('p0'));
+  const rid = 'mt1.1';
+  const handOver = (to, label) => {
+    H.host = to;
+    H.priv[to].chain = undefined;
+    host = createHost(H.page(to));
+    run(H, host, 1);
+    assert.equal(H.state.g.by, to, `${label}: the new host wrote itself in`);
+    assert.equal(readRound(H.state.r).rid, rid, `${label}: same round`);
+    assert.equal(H.state.g.n, 1, `${label}: no new round`);
+  };
+  // Run to the Hush.
+  while (!(host.world && host.world.t > host.world.S.timing.hushStart + 3)) run(H, host, 5);
+  const keep = H.priv.p1.q.q;
+  handOver('p1', 'in the Hush');
+  assert.equal(H.priv.p0.q.q !== undefined, true);
+  assert.equal(H.priv.p1.q.q, keep, 'the quarry survives the change');
+  assert.equal(rules.stage(host.world.S, host.world.t), 'hush');
+  // Run to the results.
+  while (!(host.world && rules.stage(host.world.S, host.world.t) === 'results')) run(H, host, 2);
+  handOver('p0', 'at the results');
+  // Run to the podium.
+  while (!H.state.g.fin) run(H, host, 2);
+  const fin = H.state.g.fin;
+  handOver('p1', 'on the podium');
+  assert.equal(H.state.g.fin, fin, 'the podium keeps its own clock');
+  assert.equal(H.ended, 0);
+  while (!H.ended) run(H, host, 5);
+  assert.equal(H.ended, 1);
 });
