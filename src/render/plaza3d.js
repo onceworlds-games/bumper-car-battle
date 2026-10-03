@@ -352,9 +352,14 @@ function palazzo(kit, mats, plaza, scene, extra) {
   galleryZ(kit, mats, pil.filter((p) => p.x > 15), 22);
   for (const o of plaza.obstacles) {
     if (o.kind === 'well') {
-      kit.cyl(mats.plain, STONE, o.x, 0, o.z, o.r, o.r + 0.1, 1.2, 8);
-      kit.cyl(mats.plain, 0x15282c, o.x, 1.15, o.z, o.r - 0.3, o.r - 0.3, 0.06, 8);
-      kit.lathe(mats.plain, IRON, o.x, 1.2, o.z, [[o.r - 0.2, 0], [o.r - 0.25, 1.4], [0.2, 2.1], [0.001, 2.2]], 6);
+      // A stone well-head with a wrought-iron arch and a lantern hung from it.
+      kit.cyl(mats.plain, STONE, o.x, 0, o.z, o.r, o.r + 0.1, 1.0, 8);
+      kit.cyl(mats.plain, 0xe9dcc4, o.x, 1.0, o.z, o.r + 0.12, o.r + 0.12, 0.14, 8);
+      kit.cyl(mats.plain, 0x15282c, o.x, 1.1, o.z, o.r - 0.25, o.r - 0.25, 0.06, 8);
+      for (const side of [-1, 1]) kit.cyl(mats.plain, IRON, o.x + side * (o.r - 0.15), 1.0, o.z, 0.07, 0.08, 1.6, 6);
+      kit.geo(mats.plain, IRON, new THREE.TorusGeometry(o.r - 0.15, 0.06, 5, 14, Math.PI), o.x, 2.6, o.z);
+      kit.cyl(mats.glow, 0xffc46a, o.x, 2.1, o.z, 0.16, 0.13, 0.32, 6);
+      extra.glows.push({ x: o.x, y: 2.3, z: o.z, c: 0xffc46a, s: 1.4 });
     } else if (o.kind === 'tree') {
       kit.cyl(mats.plain, STONE_DARK, o.x, 0, o.z, o.r, o.r + 0.05, 0.7, 8);
       kit.cyl(mats.plain, 0x5a3a26, o.x, 0.7, o.z, 0.14, 0.2, 1.6, 6);

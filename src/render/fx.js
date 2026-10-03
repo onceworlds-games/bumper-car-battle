@@ -104,22 +104,27 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); if (t.a * vA < 0.01) disc
   const faces = Array.from({ length: 8 }, () => {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false }));
     s.visible = false;
-    s.scale.set(0.62, 0.62, 1);
+    s.scale.set(0.4, 0.4, 1);
     scene.add(s);
     return { s, until: 0 };
   });
 
   // ---- Fireworks: shells on the GPU, all from one seed ----
   const FW_SHELLS = 46;
-  const FW_PER = 56;
+  const FW_PER = 72;
+  const TRAIL = 3; // each spark drawn three times along its path: a short streak
+  const FW_N = FW_SHELLS * FW_PER * TRAIL;
   const fwGeo = new THREE.BufferGeometry();
-  const fwShell = new Float32Array(FW_SHELLS * FW_PER * 4);
-  const fwDir = new Float32Array(FW_SHELLS * FW_PER * 4);
-  const fwCol = new Float32Array(FW_SHELLS * FW_PER * 3);
-  fwGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(FW_SHELLS * FW_PER * 3), 3));
+  const fwShell = new Float32Array(FW_N * 4);
+  const fwDir = new Float32Array(FW_N * 4);
+  const fwCol = new Float32Array(FW_N * 3);
+  const fwTrail = new Float32Array(FW_N);
+  for (let i = 0; i < FW_N; i++) fwTrail[i] = i % TRAIL;
+  fwGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(FW_N * 3), 3));
   fwGeo.setAttribute('aShell', new THREE.BufferAttribute(fwShell, 4));
   fwGeo.setAttribute('aDir', new THREE.BufferAttribute(fwDir, 4));
   fwGeo.setAttribute('color', new THREE.BufferAttribute(fwCol, 3));
+  fwGeo.setAttribute('aTrail', new THREE.BufferAttribute(fwTrail, 1));
   const fwUniforms = { uTime: { value: -999 }, uMap: { value: glowTexture() }, uScale: { value: 380 } };
   const fwMat = new THREE.ShaderMaterial({
     uniforms: fwUniforms,
@@ -127,11 +132,12 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); if (t.a * vA < 0.01) disc
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     vertexColors: true,
-    vertexShader: `attribute vec4 aShell; attribute vec4 aDir; varying vec3 vC; varying float vA;
+    vertexShader: `attribute vec4 aShell; attribute vec4 aDir; attribute float aTrail; varying vec3 vC; varying float vA;
 uniform float uTime; uniform float uScale;
 void main() {
   // aShell: launch x, z, launch time, burst height. aDir: direction xyz, speed. Particle 0 of each shell is the rocket.
-  float t = uTime - aShell.z;
+  // aTrail: 0 the spark itself, 1 and 2 where it was a moment ago (fainter): a streak.
+  float t = uTime - aShell.z - aTrail * 0.055;
   float rise = 1.3;
   vec3 base = vec3(aShell.x, 0.0, aShell.y);
   vec3 p;
@@ -148,13 +154,13 @@ void main() {
     a *= 0.75 + 0.25 * sin(b * 30.0 + aDir.x * 40.0);
   }
   vC = color;
-  vA = a;
+  vA = a * (1.0 - aTrail * 0.33);
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
-  gl_PointSize = (aDir.w > 0.0 ? 1.0 : 1.6) * uScale / max(1.0, -mv.z);
+  gl_PointSize = (aDir.w > 0.0 ? 1.25 - aTrail * 0.25 : 1.6) * uScale / max(1.0, -mv.z);
   gl_Position = projectionMatrix * mv;
 }`,
     fragmentShader: `uniform sampler2D uMap; varying vec3 vC; varying float vA;
-void main() { vec4 t = texture2D(uMap, gl_PointCoord); if (vA < 0.01) discard; gl_FragColor = vec4(vC * t.rgb * 1.6, t.a * vA); }`,
+void main() { vec4 t = texture2D(uMap, gl_PointCoord); if (vA < 0.01) discard; gl_FragColor = vec4(vC * t.rgb * 2.2, t.a * vA); }`,
   });
   const fireworks = new THREE.Points(fwGeo, fwMat);
   fireworks.frustumCulled = false;
@@ -197,7 +203,7 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); if (vA < 0.01) discard; g
       for (let i = 0; i < k; i++) {
         const a = Math.random() * Math.PI * 2;
         const v = 1.5 + Math.random() * 3.2;
-        spawn(x, y, z, Math.cos(a) * v * 0.7, 2.8 + Math.random() * 3.5, Math.sin(a) * v * 0.7, palette[i % palette.length], 0.09 + Math.random() * 0.08, 1.8 + Math.random() * 1.2, 4.2, 0);
+        spawn(x, y, z, Math.cos(a) * v * 0.7, 2.2 + Math.random() * 3.2, Math.sin(a) * v * 0.7, palette[i % palette.length], 0.13 + Math.random() * 0.1, 1.8 + Math.random() * 1.2, 4.2, 0);
       }
     },
     smoke(x, z, r = 4) {
@@ -226,6 +232,7 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); if (vA < 0.01) discard; g
       const f = faces.find((q) => !q.s.visible) ?? faces[0];
       f.s.material.map = texture;
       f.s.material.needsUpdate = true;
+      f.base = [x, y, z];
       f.s.position.set(x, y, z);
       f.s.visible = true;
       f.until = last + seconds;
@@ -269,31 +276,38 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); if (vA < 0.01) discard; g
         g.material.opacity = u >= 1 ? Math.max(0, Math.min(1, (3.0 - l.age) * 2)) : 0.8;
       });
     },
-    /** The Hush's fireworks for a round: a seeded show from `start` (seconds) over `span` seconds. */
-    setFireworks(seed, start, span, center, radius) {
+    /**
+     * The Hush's fireworks for a round: a seeded show from `start` (seconds) over `span` seconds. `burstAt` (posters):
+     * the first few shells all burst just before that moment.
+     */
+    setFireworks(seed, start, span, center, radius, burstAt = null, placed = null) {
       const R = rng(hash32('fireworks', seed));
       shellList = [];
       for (let s = 0; s < FW_SHELLS; s++) {
-        const t0 = start + 0.6 + (s / FW_SHELLS) * (span - 2.5) + R.range(-0.4, 0.4);
+        let t0 = start + 0.6 + (s / FW_SHELLS) * (span - 2.5) + R.range(-0.4, 0.4);
+        if (burstAt !== null && s < 6) t0 = burstAt - 1.3 - 0.35 - s * 0.2;
         const a = R.range(0, Math.PI * 2);
         const d = R.range(radius * 0.6, radius * 1.25);
-        const x = center.x + Math.cos(a) * d;
-        const z = center.z + Math.sin(a) * d;
-        const h = R.range(18, 30);
+        let x = center.x + Math.cos(a) * d;
+        let z = center.z + Math.sin(a) * d;
+        let h = R.range(18, 30);
+        if (placed && placed[s]) [x, h, z] = placed[s];
         const c1 = FW_COLORS[R.int(FW_COLORS.length)];
         const c2 = FW_COLORS[R.int(FW_COLORS.length)];
         const speed = R.range(7, 12);
         shellList.push({ t: t0, x, z });
         for (let p = 0; p < FW_PER; p++) {
-          const i = s * FW_PER + p;
-          fwShell.set([x, z, t0, h], i * 4);
           // Fibonacci sphere: an even burst.
           const k = p + 0.5;
           const phi = Math.acos(1 - (2 * k) / FW_PER);
           const th = Math.PI * (1 + Math.sqrt(5)) * k;
-          fwDir.set([Math.cos(th) * Math.sin(phi), Math.cos(phi), Math.sin(th) * Math.sin(phi), p === 0 ? 0 : speed * (0.85 + 0.3 * ((p * 37) % 11) / 11)], i * 4);
           C.setHex(p % 3 === 0 ? c2 : c1);
-          fwCol.set([C.r, C.g, C.b], i * 3);
+          for (let tr = 0; tr < TRAIL; tr++) {
+            const i = (s * FW_PER + p) * TRAIL + tr;
+            fwShell.set([x, z, t0, h], i * 4);
+            fwDir.set([Math.cos(th) * Math.sin(phi), Math.cos(phi), Math.sin(th) * Math.sin(phi), p === 0 ? 0 : speed * (0.85 + (0.3 * ((p * 37) % 11)) / 11)], i * 4);
+            fwCol.set([C.r, C.g, C.b], i * 3);
+          }
         }
       }
       fwGeo.attributes.aShell.needsUpdate = true;
@@ -309,7 +323,8 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); if (vA < 0.01) discard; g
     fireworksTime(t) {
       fwUniforms.uTime.value = t;
     },
-    update(time) {
+    /** time: seconds; cam: the camera's position (faces sit just in front of their heads, toward it). */
+    update(time, cam) {
       let dt = time - last;
       last = time;
       if (!(dt > 0) || dt > 0.25) dt = 0.016;
@@ -350,7 +365,20 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); if (vA < 0.01) discard; g
         f.m.rotation.x += f.spin * dt;
         if (f.life <= 0) f.m.visible = false;
       }
-      for (const f of faces) if (f.s.visible && last > f.until) f.s.visible = false;
+      for (const f of faces) {
+        if (!f.s.visible) continue;
+        if (last > f.until) {
+          f.s.visible = false;
+          continue;
+        }
+        if (cam && f.base) {
+          const dx = cam.x - f.base[0];
+          const dy = cam.y - f.base[1];
+          const dz = cam.z - f.base[2];
+          const l = Math.hypot(dx, dy, dz) || 1;
+          f.s.position.set(f.base[0] + (dx / l) * 0.3, f.base[1] + (dy / l) * 0.3, f.base[2] + (dz / l) * 0.3);
+        }
+      }
     },
   };
   return api;

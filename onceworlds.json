@@ -1,8 +1,38 @@
 {
   "slug": "carnevale",
   "name": "Carnevale",
-  "description": "A masked ball where everyone looks alike. Blend in, find your target, unmask them. Inspired by SpyParty.",
+  "description": "A masked ball where everyone looks alike. Blend in, find your quarry, unmask them. Inspired by SpyParty.",
   "dir": "dist",
   "productionBranch": "main",
-  "genre": "Party"
+  "genre": "Party",
+  "icon": "store/icon.png",
+  "thumbnails": ["store/thumb-1.png", "store/thumb-2.png", "store/thumb-3.png", "store/thumb-4.png"],
+  "controls": [
+    { "keys": ["W", "A", "S", "D"], "action": "Walk (arrow keys too)" },
+    { "keys": ["Click"], "action": "Walk there, or mark a figure" },
+    { "keys": ["F"], "action": "Back into step (or tap your shadow)" },
+    { "keys": ["Shift"], "action": "Sprint: quick, loud, costs poise" },
+    { "keys": ["E"], "action": "Unmask the figure in front of you" },
+    { "keys": ["G"], "action": "Greet, or answer a greeting" },
+    { "keys": ["1", "2"], "action": "Your two tricks" },
+    { "keys": ["Space"], "action": "Flourish" },
+    { "keys": ["Tab", "M"], "action": "Map" },
+    { "keys": ["Right drag", "Z", "X"], "action": "Turn the camera" },
+    { "keys": ["Wheel"], "action": "Zoom" },
+    { "keys": ["Esc"], "action": "Close the map" }
+  ],
+  "help": "You are one mask among dozens. Stand in your place in your troupe to stay hidden and recover poise; leave it to hunt. Your card shows your quarry's costume, and clues name their district. Find the figure that moves like a person and unmask them before your pursuer finds you. Unmask an ordinary reveller and your own mask slips. At midnight everyone freezes.",
+  "badges": [
+    { "id": "first-unmask", "name": "First Unmask", "description": "Unmask your quarry.", "icon": "store/badges/first-unmask.png" },
+    { "id": "faux-pas", "name": "Faux Pas", "description": "Unmask a reveller who was only a reveller.", "icon": "store/badges/faux-pas.png" },
+    { "id": "ghost", "name": "Ghost", "description": "Finish a round of Masquerade without being unmasked.", "icon": "store/badges/ghost.png" },
+    { "id": "hush-hero", "name": "Hush Hero", "description": "Unmask someone in the Hush, after midnight strikes.", "icon": "store/badges/hush-hero.png" },
+    { "id": "close-call", "name": "Close Call", "description": "Your pursuer blunders right beside you.", "icon": "store/badges/close-call.png" },
+    { "id": "master-of-disguise", "name": "Master of Disguise", "description": "Hunt for a whole minute without getting flustered.", "icon": "store/badges/master-of-disguise.png" },
+    { "id": "sharp-eye", "name": "Sharp Eye", "description": "Five unmasks in one match without a single faux pas.", "icon": "store/badges/sharp-eye.png" },
+    { "id": "case-closed", "name": "Case Closed", "description": "Solve Spot the Mask against Master impostors.", "icon": "store/badges/case-closed.png" },
+    { "id": "full-house", "name": "Full House", "description": "Play a round with ten players.", "icon": "store/badges/full-house.png" },
+    { "id": "level-10", "name": "Level 10", "description": "Reach level ten.", "icon": "store/badges/level-10.png" },
+    { "id": "bait", "name": "Bait", "description": "Someone unmasks your decoy.", "icon": "store/badges/bait.png" }
+  ]
 }

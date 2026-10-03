@@ -7,7 +7,7 @@ import { EM } from '../sim/choreo.js';
 import { floorY, PLAZAS } from '../sim/plazas.js';
 import { sfx, near } from '../audio/sfx.js';
 import { avatarUrl } from '../platform.js';
-import { makeCanvas, drawBust } from '../ui/icons.js';
+import { makeCanvas, drawFace } from '../ui/icons.js';
 import { unit } from '../sim/rng.js';
 import { BURSTS } from './progress.js';
 
@@ -43,7 +43,9 @@ export function createEvents({ stage, hud, session, player, view, progress }) {
     if (faces.has(id)) return faces.get(id);
     const [c, g] = makeCanvas(96);
     const m = r.m[id];
-    drawBust(g, m ? m.tr : 0, 0, 0, 96, { off: true });
+    let seed = 0;
+    for (let i = 0; i < id.length; i++) seed = (seed * 31 + id.charCodeAt(i)) | 0;
+    drawFace(g, 96, seed);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     faces.set(id, tex);

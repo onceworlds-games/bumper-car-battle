@@ -31,6 +31,9 @@ const CHROME = process.env.CHROME ?? (existsSync(TESTING) ? TESTING : '/Applicat
 
 export async function launch({ width = 1280, height = 720, gpu = false } = {}) {
   const profile = mkdtempSync(join(process.env.TMP_PROFILES ?? tmpdir(), 'hb-chrome-'));
+  // gpu: the machine's real GPU (Metal on a Mac) for store art at the high quality tier; otherwise software GL,
+  // which is slow and forces the game's low tier but runs anywhere.
+  const graphics = gpu ? ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu-rasterization'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-sandbox'];
   const args = [
     '--headless=new',
     '--hide-scrollbars',
@@ -39,15 +42,12 @@ export async function launch({ width = 1280, height = 720, gpu = false } = {}) {
     '--autoplay-policy=no-user-gesture-required',
     `--user-data-dir=${profile}`,
     `--window-size=${width},${height}`,
-    '--use-angle=swiftshader',
-    '--enable-unsafe-swiftshader',
-    '--ignore-gpu-blocklist',
+    ...graphics,
     '--disable-background-timer-throttling',
     '--disable-renderer-backgrounding',
     '--disable-backgrounding-occluded-windows',
     'about:blank',
   ];
-  if (!gpu) args.unshift('--disable-gpu-sandbox');
   const chrome = spawn(CHROME, args, { stdio: 'ignore' });
   // Never leave a browser behind, even when a test crashes.
   process.on('exit', () => {

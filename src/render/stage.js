@@ -52,7 +52,7 @@ export function createStage(canvas) {
         built.update(time, u, camera.cam.position, clockU);
         built.setSky(sky);
       }
-      fx.update(time);
+      fx.update(time, camera.cam.position);
       R.renderer.render(scene, camera.cam);
     },
   };

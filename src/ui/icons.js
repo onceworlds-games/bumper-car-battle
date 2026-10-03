@@ -462,3 +462,39 @@ export function drawRing(g, s, elapsed) {
   g.arc(c, c, R, A(0), A(Math.min(1.6, elapsed)));
   g.stroke();
 }
+
+/** A face for a fallen mask: round, caught out, a hint of the cowl round it. Skin tones vary by seed. */
+export function drawFace(g, s, seed = 0) {
+  const tones = ['#f2c9a0', '#e0ac7e', '#c68b5e', '#9a6440', '#f6d8bd', '#b07850'];
+  const u = s / 100;
+  g.clearRect(0, 0, s, s);
+  g.fillStyle = '#2a1f1d';
+  g.beginPath();
+  g.arc(50 * u, 50 * u, 48 * u, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = tones[Math.abs(seed) % tones.length];
+  g.beginPath();
+  g.ellipse(50 * u, 55 * u, 33 * u, 37 * u, 0, 0, Math.PI * 2);
+  g.fill();
+  // Raised brows, wide eyes, a small round mouth: caught.
+  g.strokeStyle = '#2a1f1d';
+  g.lineWidth = 3 * u;
+  g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(30 * u, 36 * u);
+  g.quadraticCurveTo(37 * u, 30 * u, 44 * u, 35 * u);
+  g.moveTo(56 * u, 35 * u);
+  g.quadraticCurveTo(63 * u, 30 * u, 70 * u, 36 * u);
+  g.stroke();
+  g.fillStyle = '#fbf6ea';
+  g.beginPath();
+  g.ellipse(37 * u, 48 * u, 6 * u, 5 * u, 0, 0, Math.PI * 2);
+  g.ellipse(63 * u, 48 * u, 6 * u, 5 * u, 0, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = '#1a1414';
+  g.beginPath();
+  g.arc(37 * u, 48 * u, 2.8 * u, 0, Math.PI * 2);
+  g.arc(63 * u, 48 * u, 2.8 * u, 0, Math.PI * 2);
+  g.ellipse(50 * u, 72 * u, 4 * u, 5 * u, 0, 0, Math.PI * 2);
+  g.fill();
+}

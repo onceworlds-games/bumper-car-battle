@@ -86,6 +86,7 @@ void main() {
   const sunCol = new THREE.Color();
   const sky = {
     uniforms,
+    dome,
     hemi,
     sun,
     fill,
