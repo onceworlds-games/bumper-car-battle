@@ -1,0 +1,8 @@
+{
+  "slug": "carnevale",
+  "name": "Carnevale",
+  "description": "A masked ball where everyone looks alike. Blend in, find your target, unmask them. Inspired by SpyParty.",
+  "dir": "dist",
+  "productionBranch": "main",
+  "genre": "Party"
+}
