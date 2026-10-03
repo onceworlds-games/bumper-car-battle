@@ -76,6 +76,7 @@ export function createHost(room, hooks = {}) {
     W = createWorld(cfg, { t: 0 });
     G = { ...G, n, t0: now, by: me() };
     queue = [];
+    admitted = '';
     answered.clear();
     toldClose.clear();
     pace.clear();
@@ -238,7 +239,9 @@ export function createHost(room, hooks = {}) {
         if (!p || !lf || Math.hypot(p.x - lf.x, p.z - lf.z) > ABILITIES.lantern.radius + 1) return null;
       } else if (ev.k !== 'greet') return null;
       answered.add(key);
-      return rules.answer(S, t, from, req.g, req.d);
+      // The page times its own answer (the fairest clock), but cannot claim much faster than the host saw it come in.
+      const heard = t - ev.t - (ev.k === 'lantern' ? 0.6 : 0);
+      return rules.answer(S, t, from, req.g, req.d < 0 ? req.d : Math.max(req.d, heard - 0.6));
     }
     if (req.t === 'lo') {
       if (rules.stage(S, t) !== 'assign' || S.r.chaos || req.ab.length !== 2 || req.ab[0] === req.ab[1]) return null;
@@ -281,7 +284,10 @@ export function createHost(room, hooks = {}) {
       }
       if (rules.isOut(S, id, t)) continue;
       const pres = readPresence(p.presence);
-      if (pres && pres.r === S.r.rid && (pres.s === 'p' || pres.s === 'k')) W.place(id, pres.x, pres.z, pres.h, honestFlags(id, pres, t));
+      // Someone whose page has gone (a reload, a dropped connection) stands in their place in the troupe, like any
+      // reveller, until they are back: no statue in the open for everyone to read.
+      if (p.connected === false && W.slotPos(id, tmp)) W.place(id, tmp.x, tmp.z, tmp.h, rules.FLAG.locked);
+      else if (pres && pres.r === S.r.rid && (pres.s === 'p' || pres.s === 'k')) W.place(id, pres.x, pres.z, pres.h, honestFlags(id, pres, t));
       else if (W.slotPos(id, tmp)) W.place(id, tmp.x, tmp.z, tmp.h, rules.FLAG.locked);
       // Idle players (the platform's flag) shimmer, then sit out the rest of the round as audience.
       if (p.idle && p.connected !== false) {

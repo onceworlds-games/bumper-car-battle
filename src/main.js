@@ -113,6 +113,11 @@ async function boot() {
     safe(() => room.on('close', (reason) => onClosed(reason)));
     safe(() => room.on('matchstart', () => {
       if (rehearsal.active) stopRehearsal(false);
+      // Readied on the platform's card without pressing Enter here: you are in the match, so the match is on screen.
+      if (!entered && safe(() => room.isParticipant(room.me.id), false)) {
+        entered = true;
+        screens.close();
+      }
       if (entered) phase = 'match';
     }));
     safe(() => room.on('matchend', () => {
@@ -131,7 +136,11 @@ async function boot() {
         screens.close();
       });
     } else if (phase === 'title') safe(() => room.hideLobby(true));
-    else if (entered && phase !== 'rehearsal') toLobby();
+    else if (entered && phase !== 'rehearsal') {
+      // Back from a closed room: a match under way is watched, not waited out in the lobby.
+      if (m && m.phase === 'playing') phase = 'match';
+      else toLobby();
+    }
   }
 
   function onClosed(reason) {

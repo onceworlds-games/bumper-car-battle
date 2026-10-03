@@ -18,7 +18,7 @@ export function createRoundView() {
   const returning = new Map();
   const targets = [];
   const others = [];
-  const pose = { x: 0, z: 0, h: 0, f: 0, w: null, e: null };
+  const pose = { x: 0, z: 0, h: 0, f: 0, w: null, e: null, away: false };
   const slotTmp = { x: 0, z: 0, h: 0, sp: 0 };
   const prevPos = new Map();
   const answers = new Map();
@@ -91,6 +91,7 @@ export function createRoundView() {
           pose.f = FLAG.locked;
           pose.w = null;
           pose.e = null;
+          pose.away = false;
         }
         let x = pose.x;
         let z = pose.z;
@@ -100,7 +101,8 @@ export function createRoundView() {
         let sp = 0;
         // "In step" is drawn on the slot, but only for someone actually near it (a page can't hide far from it).
         const so = (m.tr * r.crowd + m.sl) * STRIDE;
-        if (pose.f & FLAG.locked && Math.hypot(pose.x - buf[so], pose.z - buf[so + 1]) > POISE.near + 0.5) pose.f &= ~FLAG.locked;
+        if (pose.away) pose.f |= FLAG.locked;
+        else if (pose.f & FLAG.locked && Math.hypot(pose.x - buf[so], pose.z - buf[so + 1]) > POISE.near + 0.5) pose.f &= ~FLAG.locked;
         if (pose.f & FLAG.locked) {
           const o = so;
           x = buf[o];

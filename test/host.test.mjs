@@ -231,3 +231,49 @@ test('a page cannot claim to be in step far from its slot, or to walk while spri
   assert.equal(W.S.pos.p1.f & rules.FLAG.sprint, 0);
   assert.ok(p);
 });
+
+test('someone whose page has gone stands in their place in the troupe, not where they were last seen', () => {
+  const H = hub();
+  const host = createHost(H.page('p0'));
+  run(H, host, 12);
+  const rid = readRound(H.state.r).rid;
+  const W = host.world;
+  const sp = { x: 0, z: 0, h: 0, sp: 0 };
+  H.players.get('p1').presence = { s: 'p', r: rid, x: 3, z: 3, h: 0, f: 0 };
+  run(H, host, 1);
+  W.slotPos('p1', sp);
+  assert.ok(Math.hypot(W.S.pos.p1.x - 3, W.S.pos.p1.z - 3) < 0.01, 'a present player is where they say');
+  H.players.get('p1').connected = false;
+  run(H, host, 1);
+  W.slotPos('p1', sp);
+  assert.ok(Math.hypot(W.S.pos.p1.x - sp.x, W.S.pos.p1.z - sp.z) < 0.35, 'an absent one is in their slot (a step behind the crowd)');
+  assert.ok(W.S.pos.p1.f & rules.FLAG.locked);
+});
+
+test('a greeted player cannot claim a quicker answer than the host saw', () => {
+  const H = hub();
+  const host = createHost(H.page('p0'));
+  run(H, host, 12);
+  const rid = readRound(H.state.r).rid;
+  const W = host.world;
+  const near = { s: 'p', r: rid, x: 0, z: 0, h: 0, f: 0 };
+  H.players.get('p0').presence = { ...near, x: 5, z: 5 };
+  H.players.get('p1').presence = { ...near, x: 5, z: 7 };
+  run(H, host, 1);
+  const g = host.local({ t: 'gr', ref: { k: 'p', id: 'p1' }, x: 5, z: 5, h: 0 });
+  assert.equal(g.k, 'greet');
+  run(H, host, 3);
+  host.onMessage({ t: 'an', rid, g: g.q, d: 0.9 }, { id: 'p1' }, H.clock);
+  run(H, host, 0.3);
+  const a = W.S.ev.find((e) => e.k === 'answer');
+  assert.ok(a, 'the answer is recorded');
+  assert.equal(a.v, 'stiff', 'three seconds late is stiff whatever the page claims');
+  // On time, the claim stands.
+  H.players.get('p2').presence = { ...near, x: 5, z: 6 };
+  run(H, host, 4);
+  const g2 = host.local({ t: 'gr', ref: { k: 'p', id: 'p2' }, x: 5, z: 5, h: 0 });
+  run(H, host, 0.8);
+  host.onMessage({ t: 'an', rid, g: g2.q, d: 0.8 }, { id: 'p2' }, H.clock);
+  run(H, host, 0.3);
+  assert.equal(W.S.ev.find((e) => e.k === 'answer' && e.g === g2.q).v, 'ok');
+});

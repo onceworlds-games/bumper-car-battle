@@ -4,7 +4,7 @@
 import { createCrowd } from '../sim/crowd.js';
 import { PLAZAS } from '../sim/plazas.js';
 import { FLAG } from '../sim/rules.js';
-import { wrap } from '../sim/geom.js';
+import { wrap, TAU } from '../sim/geom.js';
 import { safe } from '../platform.js';
 import { readRound, readStatus, readScores, readFx, readEvents, readGame, readIntel, readPresence, r2 } from './wire.js';
 
@@ -133,6 +133,8 @@ export function createSession(room, host, hooks = {}) {
       // Headings travel unwrapped so a turn through south never spins the long way on other screens.
       unwrapped += wrap((p.h ?? 0) - lastH);
       lastH = p.h ?? 0;
+      // Whole turns are dropped now and then: the number stays small, and the short way round is all that is read.
+      if (Math.abs(unwrapped) > 20) unwrapped -= TAU * Math.round(unwrapped / TAU);
       const out = { s: p.s, r: p.r ?? '', x: r2(p.x ?? 0), z: r2(p.z ?? 0), h: r2(unwrapped), f: p.f | 0, tr: p.tr ?? -1, sl: p.sl ?? -1 };
       if (p.w) out.w = p.w;
       if (p.e) out.e = p.e;
@@ -142,7 +144,8 @@ export function createSession(room, host, hooks = {}) {
         if (b) {
           out.b = b.map((q, i) => {
             const prev = botH.get(i) ?? q[2];
-            const h = prev + wrap(q[2] - prev);
+            let h = prev + wrap(q[2] - prev);
+            if (Math.abs(h) > 20) h -= TAU * Math.round(h / TAU);
             botH.set(i, h);
             return [q[0], q[1], r2(h), q[3]];
           });
@@ -168,6 +171,7 @@ export function createSession(room, host, hooks = {}) {
           out.f = p.f;
           out.w = null;
           out.e = null;
+          out.away = false;
           return out;
         }
         const bots = Object.keys(r.m).filter((k) => r.m[k].b).sort();
@@ -181,6 +185,7 @@ export function createSession(room, host, hooks = {}) {
         out.f = q[3];
         out.w = null;
         out.e = null;
+        out.away = false;
         return out;
       }
       const raw = safe(() => room.presenceAt(id, { angles: ['h'], snap: 5 }), null);
@@ -188,6 +193,8 @@ export function createSession(room, host, hooks = {}) {
       if (!p || p.r !== r.rid || (p.s !== 'p' && p.s !== 'k')) return null;
       // Snapping flags and answers come from the newest update, not the in-between one.
       const latest = readPresence(safe(() => room.players.get(id)?.presence, null));
+      // A page that has gone (reload, dropped connection) is drawn in its place in the troupe until it is back.
+      out.away = safe(() => room.players.get(id)?.connected === false, false);
       out.x = p.x;
       out.z = p.z;
       out.h = p.h;
