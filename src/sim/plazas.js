@@ -17,6 +17,13 @@ const PIAZZA = {
   ],
   raised: [],
   ramps: [],
+  // Arcade roofs (the camera keeps clear of them: x0, x1, z0, z1, and the height of their tops).
+  roofs: [
+    { x0: -29, x1: -11, z0: -21.3, z1: -17.5, h: 5.65 },
+    { x0: -29, x1: -11, z0: 17.5, z1: 21.3, h: 5.65 },
+    { x0: -4, x1: 14, z0: -21.3, z1: -17.5, h: 5.65 },
+    { x0: -4, x1: 14, z0: 17.5, z1: 21.3, h: 5.65 },
+  ],
   obstacles: [
     { t: 'c', x: -6, z: 0, r: 3.1, occ: false, h: 0.9, kind: 'fountain' },
     { t: 'c', x: -6, z: 0, r: 0.8, occ: true, h: 4.2, kind: 'statue' },
@@ -80,6 +87,7 @@ const QUAY = {
   ],
   raised: [],
   ramps: [],
+  roofs: [{ x0: -17, x1: 15, z0: -18.3, z1: -14.5, h: 5.65 }],
   obstacles: [
     { t: 'c', x: -6, z: 4, r: 0.9, occ: true, h: 14, kind: 'column' },
     { t: 'c', x: 6, z: 4, r: 0.9, occ: true, h: 14, kind: 'column' },
@@ -133,6 +141,11 @@ const PALAZZO = {
     { x0: -4, x1: 4, z0: -12, z1: -6, y0: 2.4, y1: 0 },
     { x0: -20, x1: -16, z0: -12, z1: -8, y0: 2.4, y1: 0 },
     { x0: 16, x1: 20, z0: -12, z1: -8, y0: 2.4, y1: 0 },
+  ],
+  roofs: [
+    { x0: -20, x1: 20, z0: -22.8, z1: -20.5, h: 7.85 },
+    { x0: -22.3, x1: -17.5, z0: -6, z1: 18, h: 5.65 },
+    { x0: 17.5, x1: 22.3, z0: -6, z1: 18, h: 5.65 },
   ],
   obstacles: [
     // The terrace's balustrade, open at the three stairs, and the stairs' own side walls.

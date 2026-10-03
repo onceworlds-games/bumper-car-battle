@@ -6,6 +6,7 @@ import { floorY } from '../sim/plazas.js';
 
 const MIN_D = 3.2;
 const MAX_D = 17;
+const ROOF_CLEAR = 1.6; // the camera stays this far above a roof, or out of the way
 
 export function createCamera() {
   const cam = new THREE.PerspectiveCamera(52, 1, 0.1, 900);
@@ -88,9 +89,19 @@ export function createCamera() {
           const sy = st.ty + (py - st.ty) * u;
           const inside = sx > b.x0 - 1.5 && sx < b.x1 + 1.5 && sz > b.z0 - 1.5 && sz < b.z1 + 1.5;
           let blocked = !inside && sy < 16;
+          if (!blocked && plaza.roofs) {
+            // Arcade roofs: never above them looking down at the tiles, never inside the beams.
+            for (const rf of plaza.roofs) {
+              if (sy < rf.h - 1.2 || sy > rf.h + ROOF_CLEAR) continue;
+              if (sx > rf.x0 - 0.5 && sx < rf.x1 + 0.5 && sz > rf.z0 - 0.5 && sz < rf.z1 + 0.5) {
+                blocked = true;
+                break;
+              }
+            }
+          }
           if (!blocked) {
             for (const o of nav.occluders) {
-              if (o.h < sy) continue;
+              if (o.h + ROOF_CLEAR < sy) continue;
               // Whatever stands right by the target (you can't be inside it) doesn't pull the camera in.
               const dt = o.t === 'c' ? Math.hypot(st.tx - o.x, st.tz - o.z) - o.r : Math.max(Math.abs(st.tx - o.x) - o.w / 2, Math.abs(st.tz - o.z) - o.d / 2);
               if (dt < 1.2) continue;
