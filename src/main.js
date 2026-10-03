@@ -25,8 +25,12 @@ import { drawFigures } from './game/view.js';
 import { installTestHook } from './testhook.js';
 
 const params = new URLSearchParams(location.search);
-if (params.has('poster')) import('./poster.js').then((m) => m.runPoster(params.get('poster')));
-else boot();
+let bootCover = document.getElementById('boot');
+if (params.has('poster')) {
+  bootCover?.remove();
+  bootCover = null;
+  import('./poster.js').then((m) => m.runPoster(params.get('poster')));
+} else boot();
 
 async function boot() {
   // Join as the page loads, so a reload never misses its seat.
@@ -90,8 +94,8 @@ async function boot() {
     room = r;
     closedReason = '';
     if (!room) return;
-    host = createHost(room, { onHeartbeat: (on) => matchUI?.heartbeat(on) });
-    session = createSession(room, host, { onHeartbeat: (on) => matchUI?.heartbeat(on) });
+    host = createHost(room, { onHeartbeat: (on) => matchUI?.heartbeat(on), onClose: () => matchUI?.closeCall() });
+    session = createSession(room, host, { onHeartbeat: (on) => matchUI?.heartbeat(on), onClose: () => matchUI?.closeCall() });
     matchUI = makeMatch(session);
     safe(() => room.on('close', (reason) => onClosed(reason)));
     safe(() => room.on('matchstart', () => {
@@ -408,6 +412,13 @@ async function boot() {
     ambience.set(lastInfo?.st === 'hush' ? 0.1 : 0.55, lastInfo?.r && lastInfo.r.plaza !== 2 ? 0.5 : 0);
     stage.render(now, u, clockU);
     stage.R.frame(dt * 1000, nowMs);
+    if (bootCover) {
+      // The first real frame is up: the splash that stood in for it dissolves.
+      const c = bootCover;
+      bootCover = null;
+      c.classList.add('gone');
+      setTimeout(() => c.remove(), 800);
+    }
   }
   requestAnimationFrame(frame);
 }

@@ -2,7 +2,7 @@
 // banners and the Master's cues, music, the heartbeat, the fireworks' booms, rings on the stones, name tags, the map,
 // the verbs, and crediting each round once.
 import { standings, awards as awardsOf, isOut } from '../sim/rules.js';
-import { TROUPES, ABILITIES, UNMASK, GREET, ABILITY_IDS } from '../sim/const.js';
+import { TROUPES, ABILITIES, UNMASK, GREET, ABILITY_IDS, aTroupe } from '../sim/const.js';
 import { floorY, PLAZAS } from '../sim/plazas.js';
 import { EM } from '../sim/choreo.js';
 import { blocked } from './player.js';
@@ -47,6 +47,9 @@ export function createMatchUI(d) {
     heartbeat(on) {
       beatOn = on;
       if (on && progress.hint('heart', 3)) hud.hint('Your pursuer is near');
+    },
+    closeCall() {
+      events.closeCall();
     },
     /** Unmask (E / the button). */
     unmask(info, nowMs) {
@@ -311,7 +314,7 @@ export function createMatchUI(d) {
     const q = session.intel;
     if (!q || !q.q) return { tr: r.m[session.me]?.tr ?? 0, name: 'No quarry', where: 'Wait for one', clock };
     const ago = q.d >= 0 ? Math.max(0, Math.round(t - q.at)) : -1;
-    return { tr: q.tr, name: q.nm, where: `a ${TROUPES[q.tr].name}`, where2: ago >= 0 ? `by ${plaza.districts[q.d].name} · ${ago}s` : info.st === 'hunt' ? 'Clue soon' : 'Clue at the hunt', clock };
+    return { tr: q.tr, name: q.nm, where: aTroupe(q.tr), where2: ago >= 0 ? `by ${plaza.districts[q.d].name} · ${ago}s` : info.st === 'hunt' ? 'Clue soon' : 'Clue at the hunt', clock };
   }
 
   function onStage(st, r, info, ctx) {

@@ -142,7 +142,6 @@ export function readEvents(v) {
       pts: int(e.pts, -999, 999, 0),
       hush: e.hush ? 1 : 0,
       clean: e.clean ? 1 : 0,
-      close: id(e.close) || '',
       bait: id(e.bait) || '',
       reply: num(e.reply, 0, 3, 0),
       v: ['ok', 'eager', 'stiff'].includes(e.v) ? e.v : 'ok',

@@ -3,7 +3,7 @@
 import { STRIDE } from '../sim/crowd.js';
 import { stage as stageOf, decoyAt, FLAG } from '../sim/rules.js';
 import { PLAZAS, floorY } from '../sim/plazas.js';
-import { SEEN } from '../sim/const.js';
+import { SEEN, POISE } from '../sim/const.js';
 import { EM } from '../sim/choreo.js';
 import { drawFigures } from './view.js';
 import { readPresence } from '../net/wire.js';
@@ -98,8 +98,11 @@ export function createRoundView() {
         let em = 0;
         let et = 0;
         let sp = 0;
+        // "In step" is drawn on the slot, but only for someone actually near it (a page can't hide far from it).
+        const so = (m.tr * r.crowd + m.sl) * STRIDE;
+        if (pose.f & FLAG.locked && Math.hypot(pose.x - buf[so], pose.z - buf[so + 1]) > POISE.near + 0.5) pose.f &= ~FLAG.locked;
         if (pose.f & FLAG.locked) {
-          const o = (m.tr * r.crowd + m.sl) * STRIDE;
+          const o = so;
           x = buf[o];
           z = buf[o + 1];
           h = buf[o + 3];

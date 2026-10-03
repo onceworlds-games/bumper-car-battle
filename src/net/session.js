@@ -57,6 +57,11 @@ export function createSession(room, host, hooks = {}) {
       if (from?.id === room.host && data.rid === cache.r?.rid) hooks.onHeartbeat?.(data.on ? 1 : 0);
       return;
     }
+    if (data.t === 'cc') {
+      // Only the host tells you your pursuer blundered beside you.
+      if (from?.id === room.host && data.rid === cache.r?.rid) hooks.onClose?.();
+      return;
+    }
     host.onMessage(data, from, matchTime);
   }));
 

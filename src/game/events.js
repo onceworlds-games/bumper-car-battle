@@ -2,7 +2,7 @@
 // heads turning to a greeting or a lantern, smoke, puffs, prompts aimed at you, score pops and the Master of
 // Ceremonies, who has something to say about most of it.
 import * as THREE from 'three';
-import { TROUPES, ABILITIES } from '../sim/const.js';
+import { TROUPES, ABILITIES, aTroupe } from '../sim/const.js';
 import { EM } from '../sim/choreo.js';
 import { floorY, PLAZAS } from '../sim/plazas.js';
 import { sfx, near } from '../audio/sfx.js';
@@ -117,6 +117,12 @@ export function createEvents({ stage, hud, session, player, view, progress }) {
         prompt = null;
       }
     },
+    /** Your pursuer blundered right beside you (the host tells you alone). */
+    closeCall() {
+      hud.pop('Close call +15', true);
+      hud.bark(pick(BARKS.close));
+      progress.badge('close-call');
+    },
     /** G pressed: answer the greeting or the lantern, if one is waiting. Returns true if it did. */
     answer(t, nowMs) {
       if (!prompt) return false;
@@ -174,11 +180,6 @@ export function createEvents({ stage, hud, session, player, view, progress }) {
           hud.pop(`Faux pas ${e.d ? '(a decoy!) ' : ''}-15`, false);
           hud.bark(pick(BARKS.faux));
           progress.badge('faux-pas');
-        }
-        if (e.close === me) {
-          hud.pop('Close call +15', true);
-          hud.bark(pick(BARKS.close));
-          progress.badge('close-call');
         }
         if (e.bait === me) {
           hud.pop('Your decoy fooled them +15', true);
@@ -249,7 +250,7 @@ export function createEvents({ stage, hud, session, player, view, progress }) {
         }
         break;
       case 'back':
-        if (e.a === me) hud.banner('Back to the ball', `now a ${TROUPES[r.m[me]?.tr ?? 0].name}`);
+        if (e.a === me) hud.banner('Back to the ball', `now ${aTroupe(r.m[me]?.tr ?? 0)}`);
         break;
       case 'audience':
         if (e.a === me) hud.banner('Audience', 'You play next round', 3000);

@@ -4,7 +4,7 @@
 import { createWorld, STEP } from '../sim/world.js';
 import * as rules from '../sim/rules.js';
 import { hash32 } from '../sim/rng.js';
-import { ABILITY_IDS, CROWD, ABILITIES } from '../sim/const.js';
+import { ABILITY_IDS, CROWD, ABILITIES, POISE, WALK } from '../sim/const.js';
 import { PLAZAS } from '../sim/plazas.js';
 import { safe, matchSettings } from '../platform.js';
 import { packRound, readRound, readStatus, readScores, readFx, readEvents, readGame, readIntel, readRequest, readPresence, r2 } from './wire.js';
@@ -21,7 +21,11 @@ export function createHost(room, hooks = {}) {
   let lastHb = 0;
   const hb = new Map();
   const idleSince = new Map();
+  const pace = new Map();
+  const slotTmp = { x: 0, z: 0, h: 0, sp: 0 };
   const answered = new Set();
+  // Close calls are told to the quarry alone: the public event never names whose pursuer blundered.
+  const toldClose = new Set();
   let admitted = '';
   const me = () => safe(() => room.me.id, '');
 
@@ -73,9 +77,22 @@ export function createHost(room, hooks = {}) {
     G = { ...G, n, t0: now, by: me() };
     queue = [];
     answered.clear();
+    toldClose.clear();
+    pace.clear();
     hb.clear();
     writeGame();
     flush(true);
+  }
+
+  /** Tells each quarry of a close call by message, whoever hunts them stays secret. */
+  function tellCloseCalls(S) {
+    for (const e of S.ev) {
+      if (!e.close || toldClose.has(e.q)) continue;
+      toldClose.add(e.q);
+      if (S.r.m[e.close]?.b) continue;
+      if (e.close === me()) hooks.onClose?.();
+      else safe(() => room.send({ t: 'cc', rid: S.r.rid }, { to: e.close }), null, 'send cc');
+    }
   }
 
   /** A new host: rebuild the round from room state, the secrets from private values, the bots from the old presence. */
@@ -170,7 +187,10 @@ export function createHost(room, hooks = {}) {
       // Copies: the rules keep changing their own objects, and room state must not change under anyone's feet.
       if (S.dirty.fx || force) safe(() => room.setState('fx', S.fx.map((f) => ({ ...f }))), null, 'setState fx');
       if (S.dirty.sc || force) safe(() => room.setState('sc', Object.fromEntries(Object.entries(S.sc).map(([k, v]) => [k, { ...v, streak: Math.round(v.streak * 10) / 10 }]))), null, 'setState sc');
-      if (S.dirty.ev || force) safe(() => room.setState('ev', S.ev.map((e) => ({ ...e }))), null, 'setState ev');
+      if (S.dirty.ev || force) {
+        tellCloseCalls(S);
+        safe(() => room.setState('ev', S.ev.map(({ close, ...e }) => ({ ...e }))), null, 'setState ev');
+      }
       S.dirty.fx = S.dirty.sc = S.dirty.ev = false;
     }
     if ((S.dirty.rs && now - lastRs > 250) || force) {
@@ -229,6 +249,26 @@ export function createHost(room, hooks = {}) {
     return null;
   }
 
+  /**
+   * What a player's flags can claim. "In step" only counts near the slot (else a page could hide in plain sight from
+   * anywhere), and a figure moving faster than a walk is sprinting whatever it says.
+   */
+  function honestFlags(id, pres, t) {
+    let f = pres.f;
+    if (f & rules.FLAG.locked && W.slotPos(id, slotTmp) && Math.hypot(pres.x - slotTmp.x, pres.z - slotTmp.z) > POISE.near + 0.5) f &= ~rules.FLAG.locked;
+    let g = pace.get(id);
+    if (!g) pace.set(id, (g = { x: pres.x, z: pres.z, t, fast: false }));
+    if (t - g.t >= 0.5) {
+      const v = Math.hypot(pres.x - g.x, pres.z - g.z) / (t - g.t);
+      g.fast = v > WALK * 2.1 && v < 9;
+      g.x = pres.x;
+      g.z = pres.z;
+      g.t = t;
+    }
+    if (g.fast && !(f & rules.FLAG.locked)) f |= rules.FLAG.sprint;
+    return f;
+  }
+
   function feedPlayers(t) {
     const S = W.S;
     const tmp = { x: 0, z: 0, h: 0, sp: 0 };
@@ -241,7 +281,7 @@ export function createHost(room, hooks = {}) {
       }
       if (rules.isOut(S, id, t)) continue;
       const pres = readPresence(p.presence);
-      if (pres && pres.r === S.r.rid && (pres.s === 'p' || pres.s === 'k')) W.place(id, pres.x, pres.z, pres.h, pres.f);
+      if (pres && pres.r === S.r.rid && (pres.s === 'p' || pres.s === 'k')) W.place(id, pres.x, pres.z, pres.h, honestFlags(id, pres, t));
       else if (W.slotPos(id, tmp)) W.place(id, tmp.x, tmp.z, tmp.h, rules.FLAG.locked);
       // Idle players (the platform's flag) shimmer, then sit out the rest of the round as audience.
       if (p.idle && p.connected !== false) {
@@ -293,8 +333,10 @@ export function createHost(room, hooks = {}) {
       W = null;
       G = null;
       queue = [];
+      toldClose.clear();
       hb.clear();
       idleSince.clear();
+      pace.clear();
     },
     /** A message from another player. at/matchTime: the room's clock when it arrived. */
     onMessage(data, from, matchTime) {
