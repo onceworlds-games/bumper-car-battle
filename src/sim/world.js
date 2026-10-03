@@ -12,8 +12,8 @@ export const STEP = 0.1;
  * cfg: the rules' round config. Returns a world with `step(dt)` and `t` (round seconds). Humans' positions are set by
  * the caller with `world.place(id, x, z, h, flags)` before each step.
  */
-export function createWorld(cfg, { crowd: sharedCrowd } = {}) {
-  const S = rules.newRound(cfg);
+export function createWorld(cfg, { crowd: sharedCrowd, S: adopted = null, t = 0, botPos = null } = {}) {
+  const S = adopted || rules.newRound(cfg);
   const plaza = PLAZAS[S.r.plaza];
   const crowd = sharedCrowd || createCrowd(plaza, S.r.seed, S.r.crowd);
   const count = TROUPES.length * S.r.crowd;
@@ -25,7 +25,7 @@ export function createWorld(cfg, { crowd: sharedCrowd } = {}) {
     count,
     skip,
     buf: crowd.buf,
-    t: 0,
+    t,
     bots: [],
     wasOut: new Map(),
     idle: new Map(),
@@ -49,13 +49,22 @@ export function createWorld(cfg, { crowd: sharedCrowd } = {}) {
       for (const [id, m] of Object.entries(S.r.m)) if (!m.gone) skip[m.tr * S.r.crowd + m.sl] = 1;
     },
   };
-  W.evalCrowd(0);
-  // Everyone starts in their slot.
+  W.evalCrowd(t);
+  // Everyone starts in their slot (an adopted round keeps the positions it knew; bots resume where they were seen).
   const sp = { x: 0, z: 0, h: 0, sp: 0 };
   for (const [id, m] of Object.entries(S.r.m)) {
+    if (m.gone) continue;
     W.slotPos(id, sp);
-    rules.setPos(S, id, sp.x, sp.z, sp.h, rules.FLAG.locked);
-    if (m.b) W.bots.push(createBot(S, id, sp.x, sp.z, sp.h));
+    const seen = botPos?.get?.(id);
+    if (!adopted || !S.pos?.[id]) rules.setPos(S, id, seen ? seen.x : sp.x, seen ? seen.z : sp.z, seen ? seen.h : sp.h, seen ? seen.f : rules.FLAG.locked);
+    if (m.b) {
+      const p = S.pos[id];
+      const B = createBot(S, id, p.x, p.z, p.h);
+      if (seen && !(seen.f & rules.FLAG.locked)) B.mv.locked = false;
+      // Don't answer greetings that happened before this page took over.
+      B.seenEv = S.seq;
+      W.bots.push(B);
+    }
   }
   const tmp = { x: 0, z: 0, h: 0, sp: 0 };
   const act = {

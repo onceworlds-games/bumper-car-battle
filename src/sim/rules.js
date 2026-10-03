@@ -190,6 +190,14 @@ function setIntel(S, id, t, initial) {
   S.dirty.intel.add(id);
 }
 
+/** Every hunter in the chain has a clue (a new host fills the gaps it couldn't recover). */
+export function ensureIntel(S, t) {
+  for (const id of S.chain) {
+    const it = S.intel[id];
+    if (!it || it.q !== quarryOf(S, id)) setIntel(S, id, t, t < S.timing.huntStart);
+  }
+}
+
 /** Positions the rules look at; the host refreshes them each tick from presence and the bots. */
 export function setPos(S, id, x, z, h, flags) {
   if (!S.pos) S.pos = {};
