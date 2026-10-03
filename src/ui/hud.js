@@ -109,6 +109,7 @@ export function createHud(root, labelsRoot, { onCard, onChip, onHome }) {
       cluster.classList.toggle('narrow', narrow);
       hint.classList.toggle('top', t);
       hint.classList.toggle('narrow', narrow);
+      document.body.classList.toggle('narrow', narrow);
       for (const ch of chips) ch.key.style.display = t ? 'none' : '';
       fanC.style.width = t ? '126px' : '168px';
       fanC.style.height = t ? '69px' : '92px';

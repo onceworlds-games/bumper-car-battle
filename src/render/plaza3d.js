@@ -299,10 +299,11 @@ function quay(kit, mats, plaza, scene, extra) {
   for (const d of plaza.decks) if (d.kind === 'bridge') bridge(kit, mats, plaza, d);
   canalWalls(kit, mats, plaza);
   // Across the lagoon: a low skyline of domes and a bell tower at dusk.
-  for (const [x, z, w, h] of [[-90, 170, 40, 6], [-30, 190, 30, 8], [40, 175, 50, 7], [110, 160, 40, 5]]) kit.box(mats.plain, 0x31535c, x, -0.5, z, w, h, 14);
-  kit.box(mats.plain, 0x2c4b54, 42, 6, 175, 5, 22, 5);
-  kit.cone(mats.plain, 0x2c4b54, 42, 28, 175, 4, 6, 4, Math.PI / 4);
-  kit.sphere(mats.plain, 0x2f5058, 15, 6, 182, 9, 1, 0.7, 1, 12);
+  // (Unlit: they stay silhouettes in the haze, whatever the sun does.)
+  for (const [x, z, w, h] of [[-90, 170, 40, 6], [-30, 190, 30, 8], [40, 175, 50, 7], [110, 160, 40, 5]]) kit.box(mats.glow, 0x3a4f5e, x, -0.5, z, w, h, 14);
+  kit.box(mats.glow, 0x34495a, 42, 6, 175, 5, 22, 5);
+  kit.cone(mats.glow, 0x34495a, 42, 28, 175, 4, 6, 4, Math.PI / 4);
+  kit.sphere(mats.glow, 0x384e5c, 15, 6, 182, 9, 1, 0.7, 1, 12);
   extra.gondolas.push([-10, -0.35, 11, 0.4], [11, -0.35, 12.5, -0.3], [-14, -0.35, 15, 0.9], [-20, -0.35, -14, 1.57], [20, -0.35, 6, 1.57]);
   return strings([
     [-17, 5.5, 6.5, 17, 5.5, 6.5, 1.2],
@@ -392,7 +393,8 @@ export function buildPlaza(scene, plaza) {
   const { lanterns, pts } = BUILDERS[plaza.id](kit, mats, plaza, group, extra);
   const meshes = kit.build(group);
   const b = plaza.bounds;
-  const ground = createGround(group, { ...b, water: plaza.water, inlay: plaza.id === 'piazza' ? { x: -6, z: 0, r: 4.2 } : plaza.id === 'palazzo' ? { x: 0, z: 3, r: 2.6 } : null });
+  // The lagoon runs on past the Quay's edge: no paving out there.
+  const ground = createGround(group, { ...b, water: plaza.id === 'quay' ? [...plaza.water, { x: 0, z: 310, w: 800, d: 580 }] : plaza.water, inlay: plaza.id === 'piazza' ? { x: -6, z: 0, r: 4.2 } : plaza.id === 'palazzo' ? { x: 0, z: 3, r: 2.6 } : null });
   if (plaza.id === 'palazzo') createGround(group, { x0: -22, x1: 22, z0: -22, z1: -12, y: 2.401, margin: 0 });
   // The lanterns hung over water are mirrored in it.
   const overWater = lanterns.filter((l) => plaza.water.some((w) => Math.abs(l.x - w.x) < w.w / 2 + 3 && Math.abs(l.z - w.z) < w.d / 2 + 3));

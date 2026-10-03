@@ -13,14 +13,14 @@ import { drawBadge } from './ui/badgeart.js';
 import { makeCanvas, drawFace } from './ui/icons.js';
 
 const SCENES = {
-  // The cover: the plaza at dusk, every troupe at its business, and one figure walking where no reveller would.
-  thumb1: { plaza: 0, seed: 23, n: 9, t: 80, u: 0.42, eye: [6.5, 4.6, 10.5], at: [-3.5, 1.6, 0], fov: 54, title: true, odd: { tr: 5, x: 0.9, z: 4.2, h: 0.35 } },
+  // The cover: the plaza at golden hour, a troupe of Gatti in the sun, and one figure walking where no reveller would.
+  thumb1: { plaza: 0, seed: 23, n: 9, t: 94, u: 0.4, eye: [7, 1.8, 6], at: [-5, 1.6, -1], fov: 40, title: true, odd: { tr: 5, x: 0.9, z: 4.2, h: 0.35 } },
   // The unmask: a fan snaps, a mask flies, confetti.
-  thumb2: { plaza: 0, seed: 9, n: 9, t: 33, u: 0.68, eye: [-3.2, 1.7, 5.3], at: [-0.4, 1.5, 2.35], fov: 40, unmask: true },
+  thumb2: { plaza: 0, seed: 9, n: 9, t: 33, u: 0.5, eye: [-3.6, 0.9, 5.8], at: [-0.4, 1.7, 2.2], fov: 46, unmask: true },
   // The Hush: midnight, fireworks over a crowd that has stopped to look up.
   thumb3: { plaza: 0, seed: 23, n: 9, t: 71, u: 1, hush: true, eye: [-1.5, 2.1, 12.5], at: [-7, 8.2, -10], fov: 60, shells: [[-14, 24, -16], [1, 22, -15], [-7, 31, -26], [9, 19, -9], [-23, 21, -6], [-4, 27, -9]] },
-  // The Quay at sunset: the lagoon, the columns, gondolas, troupes on the waterfront.
-  thumb4: { plaza: 2, seed: 31, n: 9, t: 95, u: 0.5, eye: [5.6, 3.3, 14.2], at: [-0.5, 2.5, -10], fov: 56 },
+  // The Quay at golden hour: the sun between the columns, troupes on the waterfront, the lagoon at the edge.
+  thumb4: { plaza: 1, seed: 31, n: 9, t: 60, u: 0.45, eye: [14, 3.6, 2], at: [-4, 2.0, 8], fov: 55 },
 };
 
 /** For composing: ?eye=x,y,z&at=x,y,z&fov=..&t=..&u=..&seed=.. override a scene's numbers. */
@@ -30,7 +30,7 @@ function overrides(sc) {
   const out = { ...sc };
   if (v3('eye')) out.eye = v3('eye');
   if (v3('at')) out.at = v3('at');
-  for (const k of ['fov', 't', 'u', 'seed', 'fw']) if (q.has(k)) out[k] = Number(q.get(k));
+  for (const k of ['fov', 't', 'u', 'seed', 'fw', 'plaza']) if (q.has(k)) out[k] = Number(q.get(k));
   return out;
 }
 

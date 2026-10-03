@@ -1110,6 +1110,27 @@ body.touch .btn kbd {
   }
 }
 
+/* On a phone the cluster takes the top centre; the Master's words and the hints stack below it, clear of the thumbs. */
+body.touch .bark {
+  top: calc(142px + var(--safe-t));
+  font-size: clamp(20px, 3.6vw, 26px);
+}
+body.touch .hint.top {
+  top: calc(184px + var(--safe-t));
+}
+body.touch .banner {
+  top: 56%;
+}
+body.touch.narrow .bark {
+  top: calc(226px + var(--safe-t));
+}
+body.touch.narrow .hint.top {
+  top: calc(266px + var(--safe-t));
+}
+body.touch.narrow .banner {
+  top: 46%;
+}
+
 /* A phone held sideways: the assignment reads left to right instead of top to bottom. */
 @media (max-height: 520px) and (min-aspect-ratio: 4/3) {
   .card.assign {

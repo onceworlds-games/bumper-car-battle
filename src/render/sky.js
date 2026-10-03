@@ -52,7 +52,7 @@ void main() {
   vec3 col = mix(uHorizon, uZenith, smoothstep(-0.02, 0.55, up));
   float sun = max(dot(d, uSunDir), 0.0);
   col += uGlow * (pow(sun, 5.0) * 0.5 + pow(sun, 40.0) * 0.8 + pow(sun, 400.0) * 2.0) * (1.0 - uNight * 0.85);
-  col += vec3(1.0, 0.9, 0.7) * smoothstep(0.9985, 0.9992, sun) * 4.0 * (1.0 - uNight);
+  col += vec3(1.0, 0.78, 0.5) * smoothstep(0.9985, 0.9992, sun) * 2.6 * (1.0 - uNight);
   // Thin streaks of cloud lit from below by the sunset.
   float band = smoothstep(0.05, 0.12, up) * (1.0 - smoothstep(0.18, 0.32, up));
   float streak = sin(d.x * 9.0 + d.z * 4.0) * sin(d.x * 3.1 - d.z * 7.0 + 1.3);
