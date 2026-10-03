@@ -13,8 +13,8 @@ on the ground shows where that place is right now; stand on it and you are **in 
 the revellers, and your **poise** (the fan) fills.
 
 Your card names your **quarry**: their troupe from the start, and every 40 seconds the district they were last seen
-in. Find the figure that moves like a person (late to a turn, walking where its troupe isn't, waving back too fast)
-and unmask them. Unmask a mere reveller and your own mask slips, so everyone near can see you. Someone else is
+in. Find the figure that moves like a person (late to a turn, walking where its troupe isn't, kicking up dust at a
+sprint, a wave answered too late or too fast: your wave gets its answer marked over them) and unmask them. Unmask a mere reveller and your own mask slips, so everyone near can see you. Someone else is
 hunting you all the while: a heartbeat means your pursuer is close. At midnight the fireworks start and everyone
 freezes for the **Hush**; unmasks then count double.
 
@@ -55,7 +55,7 @@ zoom.
 The host picks these on the lobby card:
 
 - **Mode**: **Masquerade** (everyone hunts and is hunted, in a ring) or **Spot the Mask** (bot impostors hide in the
-  crowd and you hunt them down; scored by speed and by faux pas).
+  crowd and you hunt them down; scored by speed and by faux pas; the results say who was found and who got away).
 - **Rounds** 1, 3 or 5; **Round** length 3, 5 or 7 minutes.
 - **Crowd**: Light (48 revellers), Normal (72) or Packed (96).
 - **Loadouts**: Standard (pick two tricks) or Chaos (two at random, any level).
@@ -88,7 +88,10 @@ Full House, Level 10, Bait.
 
 Up to ten players share a room. The host's page runs each round from the room's match clock (assignments, clues,
 the Hush, scoring) and keeps every player's quarry as that player's private value, so a reloaded player gets their
-seat back and a new host carries on the same round.
+seat back and a new host carries on the same round, whichever phase it is in. Nobody else's page holds your quarry:
+even a close call is told to the quarry alone, by message. A player whose page has gone stands in their place in
+their troupe until they are back; someone untouched for a long while leaves the round as audience (a figure standing
+in its place gets a minute, and the Hush never counts).
 
 ## How it's built
 
@@ -98,7 +101,9 @@ Vite and three.js; every model, texture, sound and tune is made in code (the two
 src/
   sim/      the pure simulation, no DOM: plazas and districts, navigation, troupe choreography, the deterministic
             crowd, the round rules, player movement, bots and a headless world for tests and the balance harness
-  render/   three.js: costumes, instanced figures, the plazas, sky, water, lanterns, fireworks, effects, camera
+  render/   three.js: costumes, instanced figures, the plazas, sky, water, lanterns, fireworks, effects, camera, and
+            the high tier's bloom and grade (high: shadows from a low sun, bloom, grade; medium: smaller shadows;
+            low: neither)
   game/     the round on screen: input, your walker, the crowd view, events, the match driver, saves and levels,
             the rehearsal
   net/      the wire format (every read validated), the host loop and the session
@@ -115,7 +120,8 @@ sending them over the network.
 ```
 npm install
 npm run dev        # standalone at http://localhost:5181 with bots
-npm test           # unit, property and fuzz tests (node --test)
+npm test           # unit, property and fuzz tests (node --test): the rules, the crowd, the wire format, the host against
+                   # a stand-in room (host changes in every phase, secrecy, hostile requests), the camera
 npm run balance    # headless rounds with bots: the balance table (node scripts/balance.mjs 30 for more rounds)
 npm run build      # dist/
 npm run smoke      # loads dist/ headless with ?test=auto and fails on any error
