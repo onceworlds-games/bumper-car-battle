@@ -17,6 +17,7 @@ export function createRoundView() {
   const decoyList = [];
   const returning = new Map();
   const targets = [];
+  const npcTargets = [];
   const others = [];
   const pose = { x: 0, z: 0, h: 0, f: 0, w: null, e: null, away: false };
   const slotTmp = { x: 0, z: 0, h: 0, sp: 0 };
@@ -163,10 +164,18 @@ export function createRoundView() {
           returning.set(s, { x: f.x, z: f.z, k });
         }
       }
+      // (Reused, one per slot: a hundred small objects a frame add up on a phone.)
+      if (npcTargets.length !== crowd.count) {
+        npcTargets.length = 0;
+        for (let s = 0; s < crowd.count; s++) npcTargets.push({ ref: { k: 'n', s }, x: 0, z: 0 });
+      }
       for (let s = 0; s < crowd.count; s++) {
         if (skip[s]) continue;
         const o = s * STRIDE;
-        targets.push({ ref: { k: 'n', s }, x: buf[o], z: buf[o + 1] });
+        const tg = npcTargets[s];
+        tg.x = buf[o];
+        tg.z = buf[o + 1];
+        targets.push(tg);
       }
 
       // ---- step me at a fixed rate ----

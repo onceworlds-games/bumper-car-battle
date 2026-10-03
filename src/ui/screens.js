@@ -214,6 +214,7 @@ export function createScreens(root) {
       });
       const f = o.querySelector('[data-next]');
       const xpRow = o.querySelector('.xp');
+      const card = o.querySelector('.card');
       return {
         tick(sec) {
           if (f) f.textContent = `${nextLabel || 'Next'} in ${Math.max(0, Math.ceil(sec))}`;
@@ -228,6 +229,11 @@ export function createScreens(root) {
           const fill = el('i', '', bar);
           fill.style.transform = `scaleX(${info.need ? Math.max(0, Math.min(1, info.into / info.need)) : 1})`;
           el('em', '', xpRow, `+${info.xp} xp`);
+          if (info.next) {
+            const nx = el('div', 'nextup', card);
+            nx.textContent = `Level ${info.next.level}: ${info.next.name}`;
+            xpRow.after(nx);
+          }
         },
       };
     },

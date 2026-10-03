@@ -678,6 +678,13 @@ body {
   letter-spacing: 0.06em;
   color: var(--print-soft);
 }
+.nextup {
+  margin: 6px 0 0;
+  font: 700 11px/1 var(--ui);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--print-soft);
+}
 .xp .bar {
   flex: 1;
   height: 6px;

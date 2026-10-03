@@ -151,13 +151,13 @@ float noise(vec2 p) {
   return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y);
 }
 float height(vec2 p) {
-  return noise(p * 0.8 + vec2(uTime * 0.22, uTime * 0.1)) * 0.5 + noise(p * 2.1 - vec2(uTime * 0.38, -uTime * 0.2)) * 0.3 + noise(p * 5.3 + vec2(-uTime * 0.6, uTime * 0.45)) * 0.2;
+  return noise(p * 0.8 + vec2(uTime * 0.22, uTime * 0.1)) * 0.5 + noise(p * 2.1 - vec2(uTime * 0.38, -uTime * 0.2)) * 0.32 + noise(p * 4.6 + vec2(-uTime * 0.6, uTime * 0.45)) * 0.14;
 }
 void main() {
   vec2 p = vW.xz;
   float e = 0.07;
   float h0 = height(p);
-  vec3 N = normalize(vec3(-(height(p + vec2(e, 0.0)) - h0) * 2.4 / e * 0.18, 1.0, -(height(p + vec2(0.0, e)) - h0) * 2.4 / e * 0.18));
+  vec3 N = normalize(vec3(-(height(p + vec2(e, 0.0)) - h0) * 1.5 / e * 0.18, 1.0, -(height(p + vec2(0.0, e)) - h0) * 1.5 / e * 0.18));
   vec3 V = normalize(uCam - vW);
   vec3 R = reflect(-V, N);
   float ndv = clamp(dot(N, V), 0.0, 1.0);

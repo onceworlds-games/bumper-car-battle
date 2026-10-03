@@ -45,6 +45,18 @@ export function levelFor(xp) {
 }
 export const unlockedAbilities = (level) => ABILITY_IDS.filter((a) => ABILITIES[a].unlock <= level);
 
+/** The next thing a level brings after this one: { level, name } or null at the top. */
+export function nextUnlock(level) {
+  const all = [
+    ...ABILITY_IDS.map((a) => ({ level: ABILITIES[a].unlock, name: ABILITIES[a].name })),
+    ...BURSTS.map((b) => ({ level: b.level, name: b.name })),
+    ...POSES.map((p) => ({ level: p.level, name: p.name })),
+    ...BANNERS.map((b) => ({ level: b.level, name: b.name })),
+  ].filter((u) => u.level > level);
+  all.sort((a, b) => a.level - b.level);
+  return all[0] ?? null;
+}
+
 const num = (v, lo, hi, fb) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.round(v))) : fb);
 
 export function freshProfile() {

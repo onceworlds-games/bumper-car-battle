@@ -9,7 +9,7 @@ import { blocked } from './player.js';
 import { projected } from './round.js';
 import { BARKS } from './events.js';
 import { sfx, near } from '../audio/sfx.js';
-import { unlockedAbilities, levelFor, POSES, BANNERS } from './progress.js';
+import { unlockedAbilities, levelFor, nextUnlock, POSES, BANNERS } from './progress.js';
 import { safe } from '../platform.js';
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -200,7 +200,7 @@ export function createMatchUI(d) {
           const res = progress.creditRound({ rid: r.rid, mode: r.mode, skill: r.skill, sc, solved: !!r.case?.solved, humans, matchTot: tot ? { unm: tot.unm + sc.unm, faux: tot.faux + sc.faux } : { unm: sc.unm, faux: sc.faux } });
           if (res) {
             const lv = levelFor(progress.profile.xp);
-            card?.xp?.({ level: lv.level, into: lv.into, need: lv.need, xp: res.xp });
+            card?.xp?.({ level: lv.level, into: lv.into, need: lv.need, xp: res.xp, next: nextUnlock(lv.level) });
           }
           if (res?.levelUp) setTimeout(() => hud.banner(`Level ${res.level}`, res.unlocked.join(' · '), 3200), 1200);
         }
