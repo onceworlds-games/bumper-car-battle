@@ -1,8 +1,9 @@
 // The WebGL renderer: crisp at any pixel ratio, adaptive quality (the platform's Graphics choice is the ceiling, and
 // with Auto this measures its own frame times), resize, a lost context that comes back, and rendering paused while
-// the tab is hidden.
+// the tab is hidden. High: shadows, bloom and grade. Medium: smaller shadows. Low: neither.
 import * as THREE from 'three';
 import { settings, onSettings, pixelRatio } from '../platform.js';
+import { createPost } from './post.js';
 
 const LEVELS = ['low', 'medium', 'high'];
 
@@ -12,11 +13,16 @@ export function createRenderer(canvas) {
     return s && LEVELS.includes(s.choice) ? s.choice : 'auto';
   };
   let level = choice() === 'auto' ? 'high' : choice();
+  // ?quality= is for trying the tiers by hand (and for the store art).
+  const forced = new URLSearchParams(location.search).get('quality');
+  if (LEVELS.includes(forced)) level = forced;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.setClearColor(0x12263a, 1);
+  let post = null;
+  let postBroken = false;
   let lost = false;
   canvas.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
@@ -24,6 +30,7 @@ export function createRenderer(canvas) {
   });
   canvas.addEventListener('webglcontextrestored', () => {
     lost = false;
+    post = null;
     api.onRestore?.();
   });
   const size = { w: 1, h: 1, pr: 1 };
@@ -40,25 +47,38 @@ export function createRenderer(canvas) {
     renderer.setSize(w, h, false);
     canvas.style.width = `${w}px`;
     canvas.style.height = `${h}px`;
+    post?.setSize(w, h, pr);
     api.onResize?.(w, h);
   };
   window.addEventListener('resize', resize);
   window.visualViewport?.addEventListener?.('resize', resize);
-  onSettings(() => {
-    const c = choice();
-    if (c !== 'auto') setLevel(c);
+  /** Shadows follow the tier; the stage tells the materials so they recompile once. */
+  const shadows = () => {
+    renderer.shadowMap.enabled = level !== 'low';
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+  };
+  const applyTier = () => {
+    shadows();
+    if (level !== 'high' && post) {
+      post.dispose();
+      post = null;
+    }
     resize();
     api.onQuality?.(level);
-  });
+  };
   // The governor: frame times over a few seconds; step down fast, step up slowly.
   const times = [];
   let calmUntil = 0;
   const setLevel = (l) => {
     if (l === level) return;
     level = l;
-    resize();
-    api.onQuality?.(level);
+    applyTier();
   };
+  onSettings(() => {
+    const c = choice();
+    if (c !== 'auto') setLevel(c);
+    else resize();
+  });
   const api = {
     renderer,
     size,
@@ -69,6 +89,22 @@ export function createRenderer(canvas) {
       return lost;
     },
     resize,
+    /** Draws the frame: through the bloom and the grade at the high tier, straight to the screen below it. */
+    render(scene, camera, time, night, reduced) {
+      if (level === 'high' && !postBroken) {
+        try {
+          if (!post) post = createPost(renderer, scene, camera);
+          post.draw(time, night, reduced);
+          return;
+        } catch (e) {
+          // No half-float targets here: the plain picture will do.
+          postBroken = true;
+          post = null;
+          console.warn('[carnevale] post', e?.message ?? e);
+        }
+      }
+      renderer.render(scene, camera);
+    },
     /** Feeds one frame's duration (ms) to the governor. */
     frame(ms, nowMs) {
       if (choice() !== 'auto' || document.hidden) return;
@@ -87,6 +123,7 @@ export function createRenderer(canvas) {
       }
     },
   };
+  shadows();
   resize();
   return api;
 }

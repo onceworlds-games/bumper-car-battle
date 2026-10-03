@@ -40,6 +40,7 @@ export function runPoster(kind) {
   const sc = overrides(SCENES[kind] ?? SCENES.thumb1);
   const canvas = document.getElementById('scene');
   const stage = createStage(canvas);
+  window.__stage = stage;
   const plaza = PLAZAS[sc.plaza];
   stage.setPlaza(plaza);
   const crowd = createCrowd(plaza, sc.seed, sc.n);

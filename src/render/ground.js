@@ -98,6 +98,7 @@ float h21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); 
   };
   const mesh = new THREE.Mesh(geo, mat);
   mesh.matrixAutoUpdate = false;
+  mesh.receiveShadow = true;
   scene.add(mesh);
   return {
     mesh,
@@ -110,16 +111,23 @@ float h21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); 
   };
 }
 
-/** Water over a list of boxes ({x, z, w, d}), plus a far plane when `open` (the lagoon runs to the horizon). */
-export function createWater(scene, boxes, { open = false } = {}) {
+/**
+ * Water over a list of boxes ({x, z, w, d}), plus a far plane when `open` (the lagoon runs to the horizon). Ripples
+ * bend what it mirrors: the sunset sky, the sun's glitter and the lanterns hung over it (`lights`: up to 24 {x, y, z}).
+ */
+export function createWater(scene, boxes, { open = false, lights = [] } = {}) {
   const uniforms = {
     uTime: { value: 0 },
-    uDeep: { value: new THREE.Color(0x0b3d47) },
-    uShallow: { value: new THREE.Color(0x1b7f8c) },
+    uDeep: { value: new THREE.Color(0x0a3a45) },
+    uShallow: { value: new THREE.Color(0x1f8a94) },
     uSky: { value: new THREE.Color(0xf4a261) },
     uHorizon: { value: new THREE.Color(0xf4a261) },
+    uSunDir: { value: new THREE.Vector3(-0.78, 0.3, -0.5).normalize() },
+    uSunCol: { value: new THREE.Color(1, 0.76, 0.5) },
     uNight: { value: 0 },
     uCam: { value: new THREE.Vector3() },
+    uLights: { value: Array.from({ length: 24 }, (_, i) => (lights[i] ? new THREE.Vector3(lights[i].x, lights[i].y, lights[i].z) : new THREE.Vector3(0, -99, 0))) },
+    uLightN: { value: Math.min(24, lights.length) },
   };
   const mat = new THREE.ShaderMaterial({
     uniforms,
@@ -131,23 +139,50 @@ uniform vec3 uDeep;
 uniform vec3 uShallow;
 uniform vec3 uSky;
 uniform vec3 uHorizon;
+uniform vec3 uSunDir;
+uniform vec3 uSunCol;
 uniform float uNight;
 uniform vec3 uCam;
+uniform vec3 uLights[24];
+uniform int uLightN;
 float h21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
 float noise(vec2 p) {
   vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y);
 }
+float height(vec2 p) {
+  return noise(p * 0.8 + vec2(uTime * 0.22, uTime * 0.1)) * 0.5 + noise(p * 2.1 - vec2(uTime * 0.38, -uTime * 0.2)) * 0.3 + noise(p * 5.3 + vec2(-uTime * 0.6, uTime * 0.45)) * 0.2;
+}
 void main() {
   vec2 p = vW.xz;
-  float n = noise(p * 0.7 + vec2(uTime * 0.25, uTime * 0.1)) * 0.6 + noise(p * 2.3 - vec2(uTime * 0.4, -uTime * 0.2)) * 0.4;
-  vec3 view = normalize(uCam - vW);
-  float fres = pow(1.0 - clamp(view.y, 0.0, 1.0), 3.0);
-  vec3 col = mix(uDeep, uShallow, n * 0.55);
-  col = mix(col, uSky, 0.18 + fres * 0.5);
-  // Glints: the light catching the ripples.
-  float gl = smoothstep(0.86, 0.97, noise(p * 6.0 + vec2(uTime * 1.3, uTime * 0.7)) * n);
-  col += mix(vec3(1.0, 0.85, 0.55), vec3(1.0, 0.7, 0.35), uNight) * gl * (0.7 + 0.5 * uNight);
+  float e = 0.07;
+  float h0 = height(p);
+  vec3 N = normalize(vec3(-(height(p + vec2(e, 0.0)) - h0) * 2.4 / e * 0.18, 1.0, -(height(p + vec2(0.0, e)) - h0) * 2.4 / e * 0.18));
+  vec3 V = normalize(uCam - vW);
+  vec3 R = reflect(-V, N);
+  float ndv = clamp(dot(N, V), 0.0, 1.0);
+  float fres = 0.04 + 0.96 * pow(1.0 - ndv, 4.0);
+  // Below the surface: deep teal, lighter where the ripples lift.
+  vec3 col = mix(uDeep, uShallow, smoothstep(0.35, 0.8, h0));
+  // What it mirrors: the sky's gradient from the horizon up, the sun's glitter on the ripples.
+  vec3 sky = mix(uHorizon, uSky, smoothstep(0.0, 0.7, max(R.y, 0.0)));
+  sky = mix(sky, vec3(0.35, 0.6, 0.62), 0.25);
+  col = mix(col, sky, clamp(fres * 0.8 + 0.04, 0.0, 1.0));
+  float s = max(dot(R, uSunDir), 0.0);
+  float glitter = pow(s, 160.0) * 2.2 + pow(s, 14.0) * 0.16;
+  float sparkle = smoothstep(0.72, 0.98, noise(p * 9.0 + vec2(uTime * 1.1, -uTime * 0.7)));
+  col += uSunCol * (glitter * (0.4 + 1.6 * sparkle)) * (1.0 - uNight * 0.8);
+  // The lanterns, mirrored: warm smears along the ripples, longer the lower the eye.
+  vec3 warm = vec3(1.0, 0.68, 0.34);
+  float rip = 0.45 + 0.55 * sin(h0 * 44.0 + uTime * 1.3);
+  for (int i = 0; i < 24; i++) {
+    if (i >= uLightN) break;
+    vec3 L = uLights[i];
+    vec2 d = L.xz - p;
+    float along = dot(normalize(d + 1e-4), normalize(uCam.xz - p + 1e-4));
+    float r2 = dot(d, d);
+    col += warm * exp(-r2 / (0.9 + 0.5 * L.y)) * rip * (0.25 + 0.75 * uNight) * (0.6 + 0.4 * max(along, 0.0)) * 0.55;
+  }
   float far = smoothstep(40.0, 140.0, distance(uCam.xz, p));
   col = mix(col, uHorizon, far * 0.85);
   gl_FragColor = vec4(col, 1.0);

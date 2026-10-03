@@ -9,40 +9,23 @@ import { TROUPES } from '../sim/const.js';
 const CAP = 40; // figures per troupe: slots, plus decoys and stragglers
 const PATTERN = { arlecchino: 1, jolly: 2 };
 
-const shared = { uTime: { value: 0 }, uMaskGlow: { value: 0.1 } };
+const shared = {
+  uTime: { value: 0 },
+  uMaskGlow: { value: 0.1 },
+  uSunW: { value: new THREE.Vector3(-0.8, 0.3, -0.5) },
+  uSunCol: { value: new THREE.Color(1, 0.75, 0.5) },
+  uRim: { value: 0.8 },
+  uMoonRim: { value: 0 },
+};
 
-function figureMaterial(tr) {
-  const t = TROUPES[tr];
-  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
-  const colA = new THREE.Color(t.robe);
-  const colB = new THREE.Color(t.trim);
-  mat.onBeforeCompile = (sh) => {
-    sh.uniforms.uTime = shared.uTime;
-    sh.uniforms.uMaskGlow = shared.uMaskGlow;
-    sh.uniforms.uPattern = { value: PATTERN[t.id] || 0 };
-    sh.uniforms.uColA = { value: colA };
-    sh.uniforms.uColB = { value: colB };
-    sh.vertexShader = sh.vertexShader
-      .replace(
-        '#include <common>',
-        `#include <common>
-attribute float aPart;
+// The same bends in the shadow pass as in the figure (a bow, a turned head, a mask that has fallen).
+const BEND_COMMON = `attribute float aPart;
 attribute vec4 aPose;
 attribute vec4 aFx;
-varying vec3 vObj;
-varying float vPart;
-varying vec4 vFx;
 vec3 rx(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(p.x, p.y * c - p.z * s, p.y * s + p.z * c); }
 vec3 ry(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(p.x * c + p.z * s, p.y, -p.x * s + p.z * c); }
-vec3 rz(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(p.x * c - p.y * s, p.x * s + p.y * c, p.z); }`,
-      )
-      .replace(
-        '#include <begin_vertex>',
-        `vec3 transformed = vec3(position);
-vObj = position;
-vPart = aPart;
-vFx = aFx;
-if (aPart > 2.5 && aPart < 3.5) {
+vec3 rz(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(p.x * c - p.y * s, p.x * s + p.y * c, p.z); }`;
+const BEND_BODY = `if (aPart > 2.5 && aPart < 3.5) {
   // The mask: askew when it slips, gone when it falls.
   vec3 q = transformed - vec3(0.0, ${HEAD_Y.toFixed(3)}, 0.0);
   q = rz(q, aPose.w * 0.55);
@@ -59,7 +42,51 @@ if (aPart > 1.5) {
 if (aPart > 0.5) {
   vec3 q = transformed - vec3(0.0, ${WAIST_Y.toFixed(3)}, 0.0);
   transformed = rx(q, aPose.x) + vec3(0.0, ${WAIST_Y.toFixed(3)}, 0.0);
-}`,
+}`;
+
+/** The depth material that draws a figure's shadow: the same pose, the same fallen mask. */
+function figureDepth() {
+  const m = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', `#include <common>\n${BEND_COMMON}`)
+      .replace('#include <begin_vertex>', `vec3 transformed = vec3(position);\n${BEND_BODY}`);
+  };
+  m.customProgramCacheKey = () => 'fig-depth';
+  return m;
+}
+
+function figureMaterial(tr) {
+  const t = TROUPES[tr];
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  const colA = new THREE.Color(t.robe);
+  const colB = new THREE.Color(t.trim);
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = shared.uTime;
+    sh.uniforms.uMaskGlow = shared.uMaskGlow;
+    sh.uniforms.uPattern = { value: PATTERN[t.id] || 0 };
+    sh.uniforms.uColA = { value: colA };
+    sh.uniforms.uColB = { value: colB };
+    sh.uniforms.uSunW = shared.uSunW;
+    sh.uniforms.uSunCol = shared.uSunCol;
+    sh.uniforms.uRim = shared.uRim;
+    sh.uniforms.uMoonRim = shared.uMoonRim;
+    sh.vertexShader = sh.vertexShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+${BEND_COMMON}
+varying vec3 vObj;
+varying float vPart;
+varying vec4 vFx;`,
+      )
+      .replace(
+        '#include <begin_vertex>',
+        `vec3 transformed = vec3(position);
+vObj = position;
+vPart = aPart;
+vFx = aFx;
+${BEND_BODY}`,
       );
     sh.fragmentShader = sh.fragmentShader
       .replace(
@@ -67,6 +94,10 @@ if (aPart > 0.5) {
         `#include <common>
 uniform float uTime;
 uniform float uMaskGlow;
+uniform vec3 uSunW;
+uniform vec3 uSunCol;
+uniform float uRim;
+uniform float uMoonRim;
 uniform int uPattern;
 uniform vec3 uColA;
 uniform vec3 uColB;
@@ -108,11 +139,17 @@ if (vPart < 1.5 && uPattern > 0) {
   totalEmissiveRadiance += iri * sh * 1.4;
   // Masks catch the lantern light: the faces stay readable as night falls.
   totalEmissiveRadiance += diffuseColor.rgb * isMask * uMaskGlow;
-  vec3 fdx = dFdx(vViewPosition);
-  vec3 fdy = dFdy(vViewPosition);
-  vec3 nrm = normalize(cross(fdx, fdy));
-  float rim = pow(1.0 - abs(dot(nrm, normalize(vViewPosition))), 2.0);
-  totalEmissiveRadiance += vec3(1.0, 0.25, 0.12) * rim * vFx.y * (0.8 + 0.2 * sin(uTime * 8.0));
+  vec3 V = normalize(vViewPosition);
+  float ndv = clamp(dot(normal, V), 0.0, 1.0);
+  float rim = pow(1.0 - ndv, 2.4);
+  // Rim light: the low sun catches the edges that face it (strongest when it is behind the figure), and at night the
+  // moon edges the other side in cool.
+  vec3 sunV = normalize((viewMatrix * vec4(uSunW, 0.0)).xyz);
+  float facing = smoothstep(-0.15, 0.55, dot(normal, sunV));
+  float behind = smoothstep(-0.3, 0.8, dot(sunV, -V));
+  totalEmissiveRadiance += uSunCol * rim * facing * (0.3 + 0.7 * behind) * uRim * 1.5;
+  totalEmissiveRadiance += vec3(0.35, 0.55, 0.9) * rim * (1.0 - facing) * uMoonRim;
+  totalEmissiveRadiance += vec3(1.0, 0.25, 0.12) * pow(1.0 - ndv, 2.0) * vFx.y * (0.8 + 0.2 * sin(uTime * 8.0));
 }`,
       );
   };
@@ -137,6 +174,7 @@ function blobTexture() {
 
 export function createFigures(scene) {
   const geos = troupeGeometries();
+  const depth = figureDepth();
   const meshes = geos.map((g, tr) => {
     const pose = new THREE.InstancedBufferAttribute(new Float32Array(CAP * 4), 4).setUsage(THREE.DynamicDrawUsage);
     const fx = new THREE.InstancedBufferAttribute(new Float32Array(CAP * 4), 4).setUsage(THREE.DynamicDrawUsage);
@@ -146,6 +184,9 @@ export function createFigures(scene) {
     m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     m.count = 0;
     m.frustumCulled = false;
+    m.castShadow = true;
+    m.receiveShadow = true;
+    m.customDepthMaterial = depth;
     scene.add(m);
     return m;
   });
@@ -155,6 +196,8 @@ export function createFigures(scene) {
   arms.setColorAt(0, new THREE.Color(1, 1, 1));
   arms.count = 0;
   arms.frustumCulled = false;
+  arms.castShadow = true;
+  arms.receiveShadow = true;
   scene.add(arms);
   const fanMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, emissive: 0x401010 });
   const fans = new THREE.InstancedMesh(fanGeometry(), fanMat, 24);
@@ -266,8 +309,18 @@ export function createFigures(scene) {
       ghostMat.opacity = 0.34 * alpha;
     },
     /** How much the masks glow (0..1, rises with the night). */
-    setNight(u) {
+    setNight(u, sky) {
       shared.uMaskGlow.value = 0.08 + u * 0.3;
+      if (!sky) return;
+      shared.uSunW.value.copy(sky.sunDir);
+      shared.uSunCol.value.copy(sky.sun.color);
+      // The rim fades with the sun (it keeps a trace of the lanterns); the moon's takes over.
+      shared.uRim.value = 0.25 + Math.min(1, sky.sun.intensity / 2.4) * 0.75;
+      shared.uMoonRim.value = Math.max(0, (u - 0.6) / 0.4) * 0.5;
+    },
+    /** The blob under each figure is all the shadow the low tier has; above it, it only grounds the feet. */
+    setTier(level) {
+      shadowMat.opacity = level === 'low' ? 1 : 0.55;
     },
     end(time) {
       shared.uTime.value = time;

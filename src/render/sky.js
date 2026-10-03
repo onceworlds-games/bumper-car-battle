@@ -4,10 +4,10 @@ import * as THREE from 'three';
 
 const KEYS = [
   // u, zenith, horizon, glow, sun colour, sun intensity, hemi sky, hemi ground (teal shadows), hemi intensity
-  [0.0, 0x4a7f9c, 0xf6b46e, 0xffd79a, 0xffe2bd, 2.0, 0xdfe3e2, 0x2c5862, 1.35],
-  [0.45, 0x2b5873, 0xf08a5d, 0xffb27a, 0xffc195, 1.4, 0xc9cfd4, 0x244a55, 1.15],
-  [0.75, 0x163a52, 0xc8665a, 0xe8866a, 0xff9a6a, 0.6, 0x9aa9bb, 0x1c3a46, 0.9],
-  [1.0, 0x0b1c2c, 0x24505e, 0x6f7a7a, 0x9fb8c8, 0.2, 0x6f8fb0, 0x16303a, 0.75],
+  [0.0, 0x3d78a0, 0xffb070, 0xffd28a, 0xffc27d, 3.0, 0xcfd9e2, 0x35575f, 0.95],
+  [0.45, 0x2a5772, 0xf2865a, 0xffb27a, 0xffa766, 2.3, 0xb8c4d0, 0x2b4d57, 0.85],
+  [0.75, 0x163a52, 0xc8665a, 0xe8866a, 0xff8f5e, 1.2, 0x8fa2b8, 0x203f4b, 0.7],
+  [1.0, 0x0b1c2c, 0x2b5a68, 0x6f8a8a, 0xa9c0d8, 0.3, 0x6f8fb0, 0x16303a, 0.62],
 ];
 
 const tmpA = new THREE.Color();
@@ -51,8 +51,8 @@ void main() {
   float up = clamp(d.y, -0.2, 1.0);
   vec3 col = mix(uHorizon, uZenith, smoothstep(-0.02, 0.55, up));
   float sun = max(dot(d, uSunDir), 0.0);
-  col += uGlow * (pow(sun, 6.0) * 0.45 + pow(sun, 60.0) * 0.6) * (1.0 - uNight * 0.85);
-  col += vec3(1.0, 0.92, 0.75) * smoothstep(0.9993, 0.9997, sun) * (1.0 - uNight);
+  col += uGlow * (pow(sun, 5.0) * 0.5 + pow(sun, 40.0) * 0.8 + pow(sun, 400.0) * 2.0) * (1.0 - uNight * 0.85);
+  col += vec3(1.0, 0.9, 0.7) * smoothstep(0.9985, 0.9992, sun) * 4.0 * (1.0 - uNight);
   // Thin streaks of cloud lit from below by the sunset.
   float band = smoothstep(0.05, 0.12, up) * (1.0 - smoothstep(0.18, 0.32, up));
   float streak = sin(d.x * 9.0 + d.z * 4.0) * sin(d.x * 3.1 - d.z * 7.0 + 1.3);
@@ -76,11 +76,25 @@ void main() {
   const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
   const sun = new THREE.DirectionalLight(0xffffff, 1);
   sun.position.set(-80, 25, -30);
+  // The sun casts the shadows (high and medium tiers); a map that follows what the camera looks at.
+  sun.shadow.mapSize.set(2048, 2048);
+  const sc = sun.shadow.camera;
+  sc.left = sc.bottom = -34;
+  sc.right = sc.top = 34;
+  sc.near = 4;
+  sc.far = 260;
+  sc.updateProjectionMatrix();
+  sun.shadow.bias = -0.0006;
+  sun.shadow.normalBias = 0.05;
+  sun.shadow.radius = 3;
+  // After the sun goes down a cool moon takes the key's place, and the shadows soften with it.
+  const moon = new THREE.DirectionalLight(0x9db8dc, 0);
+  moon.position.set(30, 60, 40);
   // Lanterns light the crowd from above as night falls: a warm fill that grows.
   const fill = new THREE.DirectionalLight(0xffb36a, 0);
   fill.position.set(10, 40, 20);
-  scene.add(hemi, sun, fill);
-  const fog = new THREE.Fog(0xf4a261, 80, 260);
+  scene.add(hemi, sun, sun.target, moon, fill);
+  const fog = new THREE.Fog(0xf4a261, 70, 250);
   scene.fog = fog;
 
   const sunCol = new THREE.Color();
@@ -89,8 +103,19 @@ void main() {
     dome,
     hemi,
     sun,
+    moon,
     fill,
     night: 0,
+    sunDir: new THREE.Vector3(-0.78, 0.3, -0.5).normalize(),
+    /** The shadow map covers what the camera looks at: the light's target sits there (snapped, so shadows don't crawl). */
+    follow(x, z) {
+      const q = 0.5;
+      const tx = Math.round(x / q) * q;
+      const tz = Math.round(z / q) * q;
+      sun.target.position.set(tx, 0, tz);
+      sun.position.set(tx + sky.sunDir.x * 110, sky.sunDir.y * 110, tz + sky.sunDir.z * 110);
+      sun.target.updateMatrixWorld();
+    },
     /** Sets the hour: u from 0 (golden hour) to 1 (midnight). */
     set(u, time = 0) {
       u = Math.max(0, Math.min(1, u));
@@ -104,15 +129,15 @@ void main() {
       mixKey(u, 6, hemi.color);
       mixKey(u, 7, hemi.groundColor);
       hemi.intensity = mixKey(u, 8);
-      fill.intensity = 0.15 + u * 0.9;
-      // The sun sinks as the evening goes on.
-      const elev = 0.16 - u * 0.24;
-      uniforms.uSunDir.value.set(-0.85, elev, -0.35).normalize();
-      sun.position.copy(uniforms.uSunDir.value).multiplyScalar(100);
-      sun.position.y = Math.max(8, sun.position.y + 30 * (1 - u));
+      fill.intensity = 0.1 + u * 0.7;
+      moon.intensity = Math.max(0, (u - 0.55) / 0.45) * 0.75;
+      // The sun sinks as the evening goes on, and its shadows grow long.
+      const elev = 0.06 + 0.58 * Math.pow(1 - u, 1.3);
+      uniforms.uSunDir.value.set(-0.78, elev, -0.5).normalize();
+      sky.sunDir.copy(uniforms.uSunDir.value);
       uniforms.uNight.value = u;
       uniforms.uTime.value = time;
-      fog.color.copy(uniforms.uHorizon.value).lerp(uniforms.uZenith.value, 0.25);
+      fog.color.copy(uniforms.uHorizon.value).lerp(uniforms.uZenith.value, 0.2);
     },
   };
   sky.set(0);

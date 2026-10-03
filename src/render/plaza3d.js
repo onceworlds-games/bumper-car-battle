@@ -394,7 +394,13 @@ export function buildPlaza(scene, plaza) {
   const b = plaza.bounds;
   const ground = createGround(group, { ...b, water: plaza.water, inlay: plaza.id === 'piazza' ? { x: -6, z: 0, r: 4.2 } : plaza.id === 'palazzo' ? { x: 0, z: 3, r: 2.6 } : null });
   if (plaza.id === 'palazzo') createGround(group, { x0: -22, x1: 22, z0: -22, z1: -12, y: 2.401, margin: 0 });
-  const water = createWater(group, [...plaza.water, ...extra.pools.map((p) => ({ x: p.x, z: p.z, r: p.r, y: p.y }))], { open: plaza.id === 'quay' });
+  // The lanterns hung over water are mirrored in it.
+  const overWater = lanterns.filter((l) => plaza.water.some((w) => Math.abs(l.x - w.x) < w.w / 2 + 3 && Math.abs(l.z - w.z) < w.d / 2 + 3));
+  const water = createWater(group, [...plaza.water, ...extra.pools.map((p) => ({ x: p.x, z: p.z, r: p.r, y: p.y }))], { open: plaza.id === 'quay', lights: overWater.slice(0, 24) });
+  for (const m of meshes) {
+    m.castShadow = true;
+    m.receiveShadow = true;
+  }
   // Statues: maskers in stone.
   const geos = troupeGeometries();
   const stoneMat = new THREE.MeshLambertMaterial({ color: 0xcfc4ae, flatShading: true });
@@ -403,6 +409,8 @@ export function buildPlaza(scene, plaza) {
     m.position.set(s.x, s.y, s.z);
     m.rotation.y = s.ry;
     m.scale.setScalar(s.s);
+    m.castShadow = true;
+    m.receiveShadow = true;
     group.add(m);
   }
   // Lanterns: bulbs, their glows, and the strings they hang from.
@@ -415,7 +423,7 @@ export function buildPlaza(scene, plaza) {
     M.makeTranslation(l.x, l.y, l.z);
     M.scale(new THREE.Vector3(1, 1.25, 1));
     bulbs.setMatrixAt(i, M);
-    bulbs.setColorAt(i, C.setHex(l.c));
+    bulbs.setColorAt(i, C.setHex(l.c).multiplyScalar(2.6)); // above 1: it blooms
   });
   bulbs.count = lanterns.length;
   group.add(bulbs);
@@ -440,9 +448,9 @@ export function buildPlaza(scene, plaza) {
     blending: THREE.AdditiveBlending,
     vertexColors: true,
     vertexShader: `attribute float aSize; varying vec3 vC; varying float vNear; uniform float uScale; uniform float uNight;
-void main() { vC = color; vec4 mv = modelViewMatrix * vec4(position, 1.0); vNear = smoothstep(2.5, 7.0, -mv.z); gl_PointSize = min(48.0, aSize * uScale * (0.55 + uNight) / -mv.z); gl_Position = projectionMatrix * mv; }`,
+void main() { vC = color; vec4 mv = modelViewMatrix * vec4(position, 1.0); vNear = smoothstep(2.5, 7.0, -mv.z); gl_PointSize = min(84.0, aSize * uScale * (0.55 + uNight) / -mv.z); gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `uniform sampler2D uMap; uniform float uNight; varying vec3 vC; varying float vNear;
-void main() { vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(vC * t.rgb * (0.45 + 0.8 * uNight), t.a * (0.5 + 0.5 * uNight) * vNear); }`,
+void main() { vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(vC * t.rgb * (0.55 + 1.3 * uNight), t.a * (0.5 + 0.5 * uNight) * vNear); }`,
   });
   const glows = new THREE.Points(glowGeo, glowMat);
   glows.frustumCulled = false;
@@ -458,6 +466,7 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(vC * 
   const gondolaGeo = gondola();
   const gondolas = new THREE.InstancedMesh(gondolaGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), Math.max(1, extra.gondolas.length));
   gondolas.count = extra.gondolas.length;
+  gondolas.castShadow = true;
   group.add(gondolas);
   // Fountain spray: water on parabolas.
   const spray = sprayPoints(extra.spray);
@@ -472,7 +481,7 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(vC * 
     lanternCount: lanterns.length,
     /** time: seconds; night: 0..1; clockU: 0..1 from eleven to midnight (null leaves the clock at a quarter to). */
     update(time, night, camPos, clockU = null) {
-      mats.facade.emissiveIntensity = Math.max(0, night * 1.35 - 0.1);
+      mats.facade.emissiveIntensity = 0.18 + night * 1.5;
       glowUniforms.uNight.value = night;
       ground.uniforms.uNight.value = night;
       water.uniforms.uTime.value = time;
@@ -495,8 +504,10 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(vC * 
       }
     },
     setSky(sky) {
-      water.uniforms.uSky.value.copy(sky.uniforms.uHorizon.value).lerp(sky.uniforms.uZenith.value, 0.4);
+      water.uniforms.uSky.value.copy(sky.uniforms.uHorizon.value).lerp(sky.uniforms.uZenith.value, 0.55);
       water.uniforms.uHorizon.value.copy(sky.uniforms.uHorizon.value);
+      water.uniforms.uSunDir.value.copy(sky.sunDir);
+      water.uniforms.uSunCol.value.copy(sky.sun.color);
     },
     dispose() {
       scene.remove(group);

@@ -19,9 +19,13 @@ export function kitMaterials() {
   const mask = bayMaskTexture();
   facade.onBeforeCompile = (sh) => {
     sh.uniforms.uMask = { value: mask };
+    // Walls darken toward the street (soot, shade) and catch the last light higher up.
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying float vWy;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWy = (modelMatrix * vec4(transformed, 1.0)).y;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform sampler2D uMask;')
-      .replace('#include <color_fragment>', 'float plaster = texture2D(uMask, vMapUv).r;\ndiffuseColor.rgb *= mix(vec3(1.0), vColor.rgb, plaster);')
+      .replace('#include <common>', '#include <common>\nuniform sampler2D uMask;\nvarying float vWy;')
+      .replace('#include <color_fragment>', 'float plaster = texture2D(uMask, vMapUv).r;\ndiffuseColor.rgb *= mix(vec3(1.0), vColor.rgb, plaster);\ndiffuseColor.rgb *= mix(0.7, 1.12, smoothstep(0.0, 15.0, vWy));')
       .replace(
         '#include <emissivemap_fragment>',
         '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= step(0.45, fract(sin(dot(floor(vEmissiveMapUv) + floor(vColor.rg * 7.0), vec2(12.9898, 78.233))) * 43758.5453));',

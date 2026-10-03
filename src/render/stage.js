@@ -7,6 +7,7 @@ import { createFigures } from './figures.js';
 import { createCamera } from './camera.js';
 import { buildPlaza } from './plaza3d.js';
 import { createFx } from './fx.js';
+import { reducedMotion } from '../platform.js';
 
 export function createStage(canvas) {
   const R = createRenderer(canvas);
@@ -47,16 +48,33 @@ export function createStage(canvas) {
     render(time, u, clockU) {
       if (R.lost) return;
       sky.set(u, time);
-      figures.setNight(u);
+      sky.follow(camera.st.tx, camera.st.tz);
+      figures.setNight(u, sky);
       if (built) {
         built.update(time, u, camera.cam.position, clockU);
         built.setSky(sky);
       }
       fx.update(time, camera.cam.position);
-      R.renderer.render(scene, camera.cam);
+      R.render(scene, camera.cam, time, u, reducedMotion());
     },
   };
-  R.onQuality = (level) => fx.setLevel(level);
-  fx.setLevel(R.level);
+  /** The tier decides the shadows: none, a small map, or a large one. Materials recompile once for the change. */
+  const tier = (level) => {
+    fx.setLevel(level);
+    figures.setTier(level);
+    const on = level !== 'low';
+    const px = level === 'high' ? 2048 : 1024;
+    sky.sun.castShadow = on;
+    if (sky.sun.shadow.mapSize.x !== px) {
+      sky.sun.shadow.mapSize.set(px, px);
+      sky.sun.shadow.map?.dispose();
+      sky.sun.shadow.map = null;
+    }
+    scene.traverse((o) => {
+      if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.needsUpdate = true;
+    });
+  };
+  R.onQuality = tier;
+  tier(R.level);
   return stage;
 }
