@@ -80,6 +80,7 @@ export const SCORE = {
   closeCall: 15,
   closeCallR: 3,
   survivor: 50,
+  caught: -25, // being unmasked costs a little: hiding well has to be worth something
   fauxPas: -15,
   wrongPlayer: -10,
   wrongVictim: 10,
@@ -94,7 +95,7 @@ export const PHASES = {
   results: 9,
 };
 
-export const CLUE = { every: 40, duel: 15 };
+export const CLUE = { every: 40, duel: 15, spot: 15 };
 
 export const SPOT = {
   impostors: { novice: 3, adept: 3, master: 4 },
