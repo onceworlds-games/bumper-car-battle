@@ -411,7 +411,7 @@ async function boot() {
     const key = canPlay ? 'play' : 'none';
     if (key !== ctrlKey) {
       ctrlKey = key;
-      controls(canPlay ? { stick: 'wasd', buttons: [{ id: 'unmask', label: 'Unmask', key: 'e' }, { id: 'greet', label: 'Greet', key: 'g' }, { id: 'sprint', label: 'Sprint', key: 'Shift' }, { id: 'trick', label: 'Trick', key: 'v' }] } : null);
+      controls(canPlay ? { stick: 'wasd', zone: 'corner', buttons: [{ id: 'unmask', label: 'Unmask', key: 'e' }, { id: 'greet', label: 'Greet', key: 'g' }, { id: 'sprint', label: 'Sprint', key: 'Shift' }, { id: 'trick', label: 'Trick', key: 'v' }] } : null);
       input.held.delete('shift');
     }
     if (canPlay) {
