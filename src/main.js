@@ -356,10 +356,11 @@ async function boot() {
       const buf = crowd.eval(now + 30, Infinity);
       const cam = stage.camera;
       if (!manualOrbit) cam.st.yaw += dt * 0.04;
-      cam.st.pitch = 0.36;
-      cam.st.dist = 18;
+      // Low, round the fountain: the crowd walks across the houses and the low sun, the name sits in the sky above.
+      cam.st.pitch = 0.1 + 0.025 * Math.sin(now * 0.07);
+      cam.st.dist = 10.5;
       cam.st.opera = 0;
-      cam.update(dt, -6, 0, 2, attract.plaza, { now });
+      cam.update(dt, -6, 0.5, 0, attract.plaza, { now });
       drawFigures(stage, { time: now, crowd, buf, skip: null, plaza: attract.plaza, cam: { x: cam.cam.position.x, z: cam.cam.position.z, fx: cam.st.tx, fz: cam.st.tz } });
       stage.fx.rings([]);
       stage.fx.lanterns([]);
