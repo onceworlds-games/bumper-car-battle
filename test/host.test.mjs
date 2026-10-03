@@ -313,3 +313,39 @@ test('a new host takes over in the Hush, at the results and on the podium withou
   while (!H.ended) run(H, host, 5);
   assert.equal(H.ended, 1);
 });
+
+test('a new host takes over in the assignment, the Blend and with someone in the Powder Room', async () => {
+  const H = hub();
+  let host = createHost(H.page('p0'));
+  run(H, host, 3);
+  const q0 = H.priv.p2.q.q;
+  H.host = 'p1';
+  H.priv.p1.chain = undefined;
+  host = createHost(H.page('p1'));
+  run(H, host, 2);
+  assert.equal(H.state.g.by, 'p1', 'taken over during the assignment');
+  assert.equal(H.priv.p2.q.q, q0);
+  run(H, host, 14);
+  // Someone is unmasked and in the Powder Room when the host goes.
+  const W = host.world;
+  const S = W.S;
+  while (W.t < S.timing.huntStart + 2) run(H, host, 1);
+  const victim = 'p2';
+  S.rs[victim].out = W.t + 9;
+  S.dirty.rs = true;
+  S.chain = S.chain.filter((x) => x !== victim);
+  S.dirty.chain = true;
+  await new Promise((r) => setTimeout(r, 300)); // statuses are written at most four times a second
+  run(H, host, 1);
+  H.host = 'p0';
+  H.priv.p0.chain = undefined;
+  const next = createHost(H.page('p0'));
+  run(H, next, 1);
+  assert.equal(H.state.g.by, 'p0');
+  const S2 = next.world.S;
+  assert.ok(S2.rs[victim].out > next.world.t, 'still in the Powder Room');
+  assert.ok(!S2.chain.includes(victim), 'out of the chain until back');
+  // They come back in a new costume, and the chain takes them in again.
+  run(H, next, 12);
+  assert.ok(S2.chain.includes(victim), 'back in the chain');
+});
