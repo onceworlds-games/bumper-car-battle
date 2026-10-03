@@ -49,17 +49,15 @@ export function createScreens(root) {
       return kind;
     },
     close,
-    title({ onEnter, onRehearse, first }) {
+    title({ onEnter }) {
       return open(
         'title',
         (o) => {
           o.className = 'title';
-          el('div', 'caps', o, 'A masked ball');
           el('h1', '', o, 'Carnevale');
           el('div', 'rule', o);
           const row = el('div', 'row', o);
           const enter = button(row, 'Enter', 'big', onEnter, 'Enter');
-          if (!first) button(row, 'Rehearse', 'ghost', onRehearse);
           setTimeout(() => enter.focus({ preventScroll: true }), 50);
         },
         { dim: false },
@@ -146,7 +144,7 @@ export function createScreens(root) {
     results({ title, sub, rows, next, nextLabel }) {
       const o = open('results', (ov) => {
         const card = el('div', 'card panel', ov);
-        el('div', 'caps', card, sub || 'Unmasked at midnight');
+        el('div', 'caps', card, sub);
         el('h2', '', card, title);
         const t = el('table', 'board', card);
         for (const r of rows.slice(0, 12)) {
@@ -174,7 +172,6 @@ export function createScreens(root) {
     final({ top, awards, onContinue, rows }) {
       const o = open('final', (ov) => {
         const card = el('div', 'card panel', ov);
-        el('div', 'caps', card, 'The ball is over');
         el('h2', '', card, top[0] ? top[0].name : 'Midnight');
         const pod = el('div', 'podium', card);
         const order = [top[1], top[0], top[2]];

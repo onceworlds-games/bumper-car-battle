@@ -92,7 +92,7 @@ float h21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); 
     float d = distance(vW.xz, L.xy);
     pool += vec3(1.0, 0.62, 0.28) * L.z * (1.0 - smoothstep(0.0, 5.5, d));
   }
-  totalEmissiveRadiance += pool * uNight * diffuseColor.rgb * 0.9;
+  totalEmissiveRadiance += pool * uNight * uNight * diffuseColor.rgb * 1.1;
 }`,
       );
   };

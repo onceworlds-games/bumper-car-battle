@@ -16,29 +16,40 @@ export function createSession(room, host, hooks = {}) {
   let unwrapped = 0;
   let lastH = 0;
   const botH = new Map();
-
-  function parse(key) {
+  // Room state is read lazily: a key is parsed again only when its value object changed (the host's own writes
+  // change room.state without an event on its own page, so events alone would miss them).
+  const seen = { g: undefined, r: undefined, rs: undefined, sc: undefined, fx: undefined, ev: undefined, q: undefined };
+  function fresh(key) {
     const st = safe(() => room.state, {}) || {};
-    if (key === 'g' || !key) cache.g = readGame(st.g);
-    if (key === 'r' || !key) cache.r = readRound(st.r);
-    if (key === 'rs' || key === 'r' || !key) cache.rs = readStatus(st.rs, cache.r);
-    if (key === 'sc' || key === 'r' || !key) cache.sc = readScores(st.sc, cache.r);
-    if (key === 'fx' || key === 'r' || !key) cache.fx = readFx(st.fx, cache.r);
-    if (key === 'ev' || !key) {
-      cache.ev = readEvents(st.ev);
-      hooks.onEvents?.(cache.ev);
+    const raw = st[key];
+    if (raw === seen[key]) return false;
+    seen[key] = raw;
+    return true;
+  }
+  function sync() {
+    const st = safe(() => room.state, {}) || {};
+    const rChanged = fresh('r');
+    if (fresh('g')) cache.g = readGame(st.g);
+    if (rChanged) cache.r = readRound(st.r);
+    if (fresh('rs') || rChanged) cache.rs = readStatus(st.rs, cache.r);
+    if (fresh('sc') || rChanged) cache.sc = readScores(st.sc, cache.r);
+    if (fresh('fx') || rChanged) cache.fx = readFx(st.fx, cache.r);
+    if (fresh('ev')) cache.ev = readEvents(st.ev);
+    const q = safe(() => room.private?.q, null);
+    if (q !== seen.q) {
+      seen.q = q;
+      cache.intel = readIntel(q);
     }
   }
-  function readMine() {
-    cache.intel = readIntel(safe(() => room.private?.q, null));
-  }
-  parse();
-  readMine();
-  safe(() => room.on('state', (key) => parse(key)));
-  safe(() => room.on('private', (key, value, pid) => {
-    if (key === 'q' && (!pid || pid === room.me.id)) readMine();
-  }));
-  safe(() => room.on('reconnect', () => (parse(), readMine())));
+  sync();
+  let syncedAt = -1;
+  const synced = () => {
+    // At most once per frame.
+    const now = performance.now();
+    if (now - syncedAt < 4) return;
+    syncedAt = now;
+    sync();
+  };
   safe(() => room.on('message', (data, from, at, matchTime) => {
     if (!data || typeof data !== 'object') return;
     if (data.t === 'hb') {
@@ -57,25 +68,31 @@ export function createSession(room, host, hooks = {}) {
       return me();
     },
     get game() {
+      synced();
       return cache.g;
     },
     /** The current round, if it belongs to the running match (a stale one from the last match reads as none). */
     get round() {
+      synced();
       const r = cache.r;
       const m = safe(() => room.match, null);
       if (!r || !m || m.phase !== 'playing' || !r.rid.startsWith(`${m.id}.`)) return null;
       return r;
     },
     get status() {
+      synced();
       return cache.rs;
     },
     get scores() {
+      synced();
       return cache.sc;
     },
     get fx() {
+      synced();
       return cache.fx;
     },
     get events() {
+      synced();
       return cache.ev;
     },
     get intel() {

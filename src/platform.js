@@ -20,6 +20,19 @@ export function safe(fn, fallback, where = 'sdk') {
   }
 }
 
+function urlSettings() {
+  const out = {};
+  try {
+    const q = new URLSearchParams(location.search);
+    for (const k of ['mode', 'rounds', 'length', 'crowd', 'loadout', 'bots']) {
+      if (!q.has(k)) continue;
+      const v = q.get(k);
+      out[k] = /^\d+$/.test(v) ? Number(v) : v;
+    }
+  } catch {}
+  return out;
+}
+
 function soloRoom(player) {
   const listeners = new Map();
   const me = { id: player.id, name: player.name, presence: null, team: 0, connected: true, ready: false };
@@ -45,7 +58,8 @@ function soloRoom(player) {
     state: {},
     host: me.id,
     connected: true,
-    settings: {},
+    // Opened on its own, the lobby settings can come from the address (?rounds=1&length=3): handy for testing.
+    settings: urlSettings(),
     budget: { messagesPerSecond: 60, presenceHz: 20, bytesPerSecond: 131072 },
     match: { phase: 'lobby', n: 0, id: '', seed: 0, min: 1, participants: [] },
     get isHost() {

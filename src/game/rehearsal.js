@@ -70,7 +70,7 @@ function localSession(W) {
 const STEPS = [
   { say: 'Welcome to the ball, darling.', hint: 'You are the one in the ring', until: (c) => c.t > 4.5 },
   { say: 'Stroll a little. Do.', hint: 'Move: WASD, or tap the stones', touchHint: 'Move: the stick, or tap the stones', until: (c) => c.away > 3 },
-  { say: 'Your shadow marks your place.', hint: 'Stand on your shadow', until: (c) => c.locked && c.wasAway },
+  { say: 'Your shadow marks your place.', hint: 'Back in line: F, or tap your shadow', touchHint: 'Back in line: tap your shadow', until: (c) => c.locked && c.wasAway },
   { say: 'In step, you are invisible. And calm.', hint: 'In step, poise fills', until: (c) => c.stepT > 3.5 },
   { say: 'Now. One Bauta is no reveller.', hint: 'Watch for the odd one out', until: (c) => c.t - c.stepAt > 5, impostor: true },
   { say: 'There. Wave at it. People flinch.', hint: 'Get close, then greet: G', touchHint: 'Get close, then Greet', until: (c) => c.greeted, impostor: true },

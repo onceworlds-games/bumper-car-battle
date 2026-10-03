@@ -153,7 +153,7 @@ function strings(defs) {
       const u = i / n;
       const x = ax + (bx - ax) * u;
       const z = az + (bz - az) * u;
-      const y = ay + 2.2 + (by - ay) * u - sag * 4 * u * (1 - u);
+      const y = ay + 3.6 + (by - ay) * u - sag * 0.6 * 4 * u * (1 - u);
       if (i > 0) pts.push(px, py, pz, x, y, z);
       if (i > 0 && i < n) lanterns.push({ x, y: y - 0.25, z, c: colors[(i + k) % colors.length] });
       px = x;
@@ -436,10 +436,10 @@ export function buildPlaza(scene, plaza) {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     vertexColors: true,
-    vertexShader: `attribute float aSize; varying vec3 vC; uniform float uScale; uniform float uNight;
-void main() { vC = color; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = min(48.0, aSize * uScale * (0.55 + uNight) / -mv.z); gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: `uniform sampler2D uMap; uniform float uNight; varying vec3 vC;
-void main() { vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(vC * t.rgb * (0.45 + 0.8 * uNight), t.a * (0.5 + 0.5 * uNight)); }`,
+    vertexShader: `attribute float aSize; varying vec3 vC; varying float vNear; uniform float uScale; uniform float uNight;
+void main() { vC = color; vec4 mv = modelViewMatrix * vec4(position, 1.0); vNear = smoothstep(2.5, 7.0, -mv.z); gl_PointSize = min(48.0, aSize * uScale * (0.55 + uNight) / -mv.z); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform sampler2D uMap; uniform float uNight; varying vec3 vC; varying float vNear;
+void main() { vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(vC * t.rgb * (0.45 + 0.8 * uNight), t.a * (0.5 + 0.5 * uNight) * vNear); }`,
   });
   const glows = new THREE.Points(glowGeo, glowMat);
   glows.frustumCulled = false;

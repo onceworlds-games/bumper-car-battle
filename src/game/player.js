@@ -27,8 +27,10 @@ export function createPlayer() {
     abFired: false,
     sprinting: false,
     steer: false,
+    fallIn: false,
   };
-  const input = { dx: 0, dz: 0, sprint: false, steer: false };
+  const input = { dx: 0, dz: 0, sprint: false, steer: false, mul: 1 };
+  let lastSlot = null;
 
   const p = {
     mv,
@@ -50,6 +52,7 @@ export function createPlayer() {
       st.target = null;
       st.prompt = null;
       st.opera = false;
+      st.fallIn = false;
     },
     emote(code, now) {
       st.em = code;
@@ -61,8 +64,15 @@ export function createPlayer() {
       if (!st.em || now - st.emAt > len) return null;
       return [st.em, now - st.emAt];
     },
+    /** Back to your place in the troupe (tap your shadow, or F). */
+    fallIn() {
+      mv.path = null;
+      st.path = null;
+      st.fallIn = true;
+    },
     /** Walks to a point (a tap or click on the stones). */
     walkTo(plaza, x, z) {
+      st.fallIn = false;
       const path = walkPath(plaza, mv.x, mv.z, x, z);
       if (!path) return false;
       mv.path = path;
@@ -98,10 +108,42 @@ export function createPlayer() {
           st.path = null;
         }
       }
+      if (fx || fz) st.fallIn = false;
       input.dx = fx;
       input.dz = fz;
       input.steer = !!(fx || fz);
-      if (!input.steer && mv.path && !ctx.frozen) input.steer = followPath(mv, input);
+      input.mul = 1;
+      if (!input.steer && st.fallIn && ctx.slot && !ctx.frozen) {
+        // Falling in: head for where your slot will be, a touch brisker than the crowd, until you're in step.
+        const s = ctx.slot;
+        const vx = lastSlot ? (s.x - lastSlot.x) / dt : 0;
+        const vz = lastSlot ? (s.z - lastSlot.z) / dt : 0;
+        const d = Math.hypot(s.x - mv.x, s.z - mv.z);
+        const lead = Math.min(2.5, d / 1.9);
+        const tx = s.x + vx * lead - mv.x;
+        const tz = s.z + vz * lead - mv.z;
+        const l = Math.hypot(tx, tz);
+        if (mv.locked || d < 0.9) st.fallIn = false;
+        else if (d > 4 && ctx.plaza) {
+          // Far off: find a way round whatever is in between, aimed at where the slot is heading.
+          st.repath = (st.repath ?? 0) - dt;
+          if (!mv.path || st.repath <= 0) {
+            mv.path = walkPath(ctx.plaza, mv.x, mv.z, mv.x + tx, mv.z + tz);
+            mv.pathI = 1;
+            st.repath = 0.8;
+          }
+          input.steer = followPath(mv, input);
+          input.mul = 1.18;
+        } else if (l > 0.05) {
+          mv.path = null;
+          input.dx = tx / l;
+          input.dz = tz / l;
+          input.steer = d > 1.1;
+          input.mul = 1.18;
+        }
+      }
+      if (ctx.slot) lastSlot = lastSlot ? Object.assign(lastSlot, { x: ctx.slot.x, z: ctx.slot.z }) : { x: ctx.slot.x, z: ctx.slot.z };
+      if (!input.steer && mv.path && !ctx.frozen && !st.fallIn) input.steer = followPath(mv, input);
       if (!mv.path) st.path = null;
       input.sprint = !ctx.frozen && k.has('shift') && input.steer;
       st.steer = input.steer;

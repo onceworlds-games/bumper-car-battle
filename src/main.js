@@ -51,6 +51,10 @@ function boot() {
       sfx.ui();
     },
     onChip: (i) => verbs.ability(i),
+    onHome: () => {
+      player.fallIn();
+      sfx.ui();
+    },
   });
   if (reducedMotion()) document.body.classList.add('reduced');
 
@@ -226,6 +230,7 @@ function boot() {
     else if (k === '1') verbs.ability(0);
     else if (k === '2') verbs.ability(1);
     else if (k === 'v') player.abilityKey(true, performance.now() / 1000);
+    else if (k === 'f') player.fallIn();
     else if (k === ' ') current()?.flourish(performance.now());
   });
   input.on('release', (k) => {
@@ -252,21 +257,9 @@ function boot() {
   onPlatformEvent('pause', () => rehearsal.pause(true));
   onPlatformEvent('resume', () => rehearsal.pause(false));
 
-  // ---- the title ----
-  const rehearse = () => {
-    unlockAudio();
-    entered = true;
-    screens.close();
-    startRehearsal();
-  };
-  screens.title({ onEnter: enter, onRehearse: rehearse, first: true });
-  progress.load().then((p) => {
-    // A returning player gets Rehearse beside Enter.
-    if (phase === 'title' && p.rehearsed) {
-      screens.close();
-      screens.title({ onEnter: enter, onRehearse: rehearse, first: false });
-    }
-  });
+  // ---- the title: the living plaza behind one button ----
+  screens.title({ onEnter: enter });
+  progress.load();
   roomP.then(setupRoom);
   installTestHook({
     get room() {

@@ -278,6 +278,11 @@ export function createRoundView() {
       }
       const g = groundPoint(cam, sx, sy, w, h);
       if (!g) return null;
+      const gh = view.frame?.ghost;
+      if (gh && Math.hypot(g[0] - gh.x, g[1] - gh.z) < 1.8) {
+        player.fallIn();
+        return 'fallin';
+      }
       return player.walkTo(plaza, g[0], g[1]) ? 'walk' : null;
     },
   };

@@ -12,7 +12,7 @@ const el = (tag, cls, parent, text) => {
   return e;
 };
 
-export function createHud(root, labelsRoot, { onCard, onChip }) {
+export function createHud(root, labelsRoot, { onCard, onChip, onHome }) {
   const wrap = el('div', 'hud', root);
   wrap.style.display = 'none';
   // Quarry card.
@@ -25,11 +25,11 @@ export function createHud(root, labelsRoot, { onCard, onChip }) {
   });
   let qCanvas = bust(0, 52);
   q.appendChild(qCanvas);
+  const imps = el('div', 'imps', q);
   const qWho = el('div', 'who', q);
   const qWhere = el('div', 'where', q);
   const qWhere2 = el('div', 'where', q);
   const qClock = el('div', 'clock', q);
-  const imps = el('div', 'imps', q);
   // The cluster: ability, fan, ability.
   const cluster = el('div', 'cluster', wrap);
   const chips = [0, 1].map((i) => {
@@ -67,6 +67,16 @@ export function createHud(root, labelsRoot, { onCard, onChip }) {
   const promptWord = el('b', '', prompt);
   const hint = el('div', 'hint', wrap);
   const why = el('div', 'why', wrap);
+  // Your place, when it's off screen: an arrow at the edge; tap it to fall back in.
+  const home = el('button', 'home live', wrap);
+  home.type = 'button';
+  home.setAttribute('aria-label', 'Back to your place');
+  const homeArrow = el('span', 'arrow', home);
+  el('span', 'lbl', home, 'Your place');
+  home.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    onHome?.();
+  });
   const vignette = el('div', 'vignette', root);
   const foot = el('div', 'foot', root);
   foot.style.display = 'none';
@@ -202,6 +212,17 @@ export function createHud(root, labelsRoot, { onCard, onChip }) {
       vignette.classList.remove('beat');
       void vignette.offsetWidth;
       vignette.classList.add('beat');
+    },
+    /** The edge arrow toward your place: screen x, y and the angle to point, or null to hide it. */
+    homing(x, y, ang) {
+      if (x === null || x === undefined) {
+        home.style.display = 'none';
+        return;
+      }
+      home.style.display = 'flex';
+      home.style.left = `${x}px`;
+      home.style.top = `${y}px`;
+      homeArrow.style.transform = `rotate(${ang}rad)`;
     },
     foot(text) {
       foot.style.display = text ? '' : 'none';

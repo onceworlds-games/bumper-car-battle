@@ -194,7 +194,7 @@ export function createMatchUI(d) {
       }
       // ---- HUD ----
       const playing = !!me && !rs?.aud && !ctx.spectate;
-      hud.show(playing && !out && want !== 'results' && want !== 'final');
+      hud.show(playing && !out && want !== 'results' && want !== 'final' && st !== 'reveal');
       hud.layout(ctx.touch);
       if (playing && !out) {
         const flust = rs && rs.fl > t;
@@ -247,6 +247,28 @@ export function createMatchUI(d) {
         }
       }
       hud.tags(tags);
+      // Your place off screen: point to it from the edge.
+      const gh = view.frame?.ghost;
+      if (playing && !out && gh && gh.alpha > 0.2 && st !== 'reveal') {
+        const w = stage.R.size.w;
+        const h = stage.R.size.h;
+        const v = projected(stage.camera.cam, gh.x, floorY(plaza, gh.x, gh.z) + 1, gh.z, w, h);
+        const inset = 70;
+        if (!v || v[0] < inset || v[0] > w - inset || v[1] < inset + 40 || v[1] > h - inset - 60) {
+          // Direction on screen from the middle (behind the camera: flip it).
+          const cam = stage.camera.cam;
+          const dx = gh.x - cam.position.x;
+          const dz = gh.z - cam.position.z;
+          const yaw = stage.camera.st.yaw;
+          const right = dx * Math.cos(yaw) - dz * Math.sin(yaw);
+          const fwd = -(dx * Math.sin(yaw) + dz * Math.cos(yaw));
+          const ang = Math.atan2(right, fwd);
+          const cx = w / 2;
+          const cy = h / 2;
+          const k = Math.min((w / 2 - inset) / Math.max(1e-3, Math.abs(Math.sin(ang))), (h / 2 - inset - 50) / Math.max(1e-3, Math.abs(Math.cos(ang))));
+          hud.homing(cx + Math.sin(ang) * k, cy - Math.cos(ang) * k, ang);
+        } else hud.homing(null);
+      } else hud.homing(null);
       hud.foot(!playing && !finalOn && want !== 'results' ? (rs?.aud ? 'Audience · you play next round' : 'Watching · you play next round') : '');
       // ---- the map ----
       if (map.open) {

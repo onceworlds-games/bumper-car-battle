@@ -72,7 +72,7 @@ export function stepMover(mv, input, dt, ctx) {
     dx /= len;
     dz /= len;
   }
-  const top = wantSprint ? SPRINT : WALK;
+  const top = wantSprint ? SPRINT : WALK * (input.mul || 1);
   const tvx = dx * top;
   const tvz = dz * top;
   const acc = (wantSprint ? ACC_SPRINT : ACC_WALK) * dt;

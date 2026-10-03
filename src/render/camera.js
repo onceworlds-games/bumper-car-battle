@@ -11,8 +11,8 @@ export function createCamera() {
   const cam = new THREE.PerspectiveCamera(52, 1, 0.1, 900);
   const st = {
     yaw: 0.6,
-    pitch: 0.46,
-    dist: 8.5,
+    pitch: 0.52,
+    dist: 10.5,
     tx: 0,
     ty: 1.4,
     tz: 0,
@@ -91,6 +91,9 @@ export function createCamera() {
           if (!blocked) {
             for (const o of nav.occluders) {
               if (o.h < sy) continue;
+              // Whatever stands right by the target (you can't be inside it) doesn't pull the camera in.
+              const dt = o.t === 'c' ? Math.hypot(st.tx - o.x, st.tz - o.z) - o.r : Math.max(Math.abs(st.tx - o.x) - o.w / 2, Math.abs(st.tz - o.z) - o.d / 2);
+              if (dt < 1.2) continue;
               const d = o.t === 'c' ? Math.hypot(sx - o.x, sz - o.z) - o.r : Math.max(Math.abs(sx - o.x) - o.w / 2, Math.abs(sz - o.z) - o.d / 2);
               if (d < 0.4) {
                 blocked = true;

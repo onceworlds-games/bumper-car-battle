@@ -27,7 +27,7 @@ export const POISE = {
   sprint: -8,
   opera: -5,
   near: 2.5, // metres: between LOCK and this you hold steady
-  lock: 1.0, // metres: fall in step when this close and not steering
+  lock: 1.25, // metres: fall in step when this close and not steering
   lockDelay: 0.3, // seconds without input before falling in
   flusterS: 6,
   unmaskCost: 25,

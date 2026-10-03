@@ -775,3 +775,27 @@ body.reduced .pop,
 body.reduced .vignette.beat {
   animation: none;
 }
+
+.home {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  display: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px 0 8px;
+  border-radius: 22px;
+  background: rgba(26, 20, 20, 0.85);
+  border: 1.5px solid var(--cream);
+  color: var(--cream);
+  font: 700 14px/1 var(--ui);
+  cursor: pointer;
+}
+.home .arrow {
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 14px solid var(--cream);
+  transform-origin: 50% 60%;
+}

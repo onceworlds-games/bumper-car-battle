@@ -167,9 +167,10 @@ export function createHost(room, hooks = {}) {
     }
     if (force || now - lastFast > 100) {
       lastFast = now;
-      if (S.dirty.fx || force) safe(() => room.setState('fx', S.fx), null, 'setState fx');
-      if (S.dirty.sc || force) safe(() => room.setState('sc', S.sc), null, 'setState sc');
-      if (S.dirty.ev || force) safe(() => room.setState('ev', S.ev), null, 'setState ev');
+      // Copies: the rules keep changing their own objects, and room state must not change under anyone's feet.
+      if (S.dirty.fx || force) safe(() => room.setState('fx', S.fx.map((f) => ({ ...f }))), null, 'setState fx');
+      if (S.dirty.sc || force) safe(() => room.setState('sc', Object.fromEntries(Object.entries(S.sc).map(([k, v]) => [k, { ...v, streak: Math.round(v.streak * 10) / 10 }]))), null, 'setState sc');
+      if (S.dirty.ev || force) safe(() => room.setState('ev', S.ev.map((e) => ({ ...e }))), null, 'setState ev');
       S.dirty.fx = S.dirty.sc = S.dirty.ev = false;
     }
     if ((S.dirty.rs && now - lastRs > 250) || force) {
