@@ -28,9 +28,14 @@ const params = new URLSearchParams(location.search);
 if (params.has('poster')) import('./poster.js').then((m) => m.runPoster(params.get('poster')));
 else boot();
 
-function boot() {
+async function boot() {
   // Join as the page loads, so a reload never misses its seat.
   let roomP = Promise.resolve(safe(() => ow.rooms.join(JOIN), null, 'join'));
+  // The join waits for the platform's handshake: let that happen before building the plaza holds the page for a
+  // while, so a slow machine (or someone arriving mid-match) is not kept out of the room by it.
+  const handshake = typeof ow.ready === 'function' ? safe(() => ow.ready(), null) : null;
+  await Promise.race([Promise.resolve(handshake), new Promise((r) => setTimeout(r, 1500))]).catch(() => {});
+  await new Promise((r) => setTimeout(r, 0));
   const canvas = document.getElementById('scene');
   const uiRoot = document.getElementById('ui');
   const labels = document.getElementById('labels');
