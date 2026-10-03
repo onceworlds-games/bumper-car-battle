@@ -336,6 +336,14 @@ async function boot() {
     } catch (e) {
       console.warn('[carnevale] host', e?.message ?? e);
     }
+    // The phase follows the room (a missed event can't leave you in the wrong screen): in the lobby, the match is
+    // on screen exactly while it plays, once you have entered.
+    if (room && entered && phase !== 'title' && phase !== 'rehearsal' && phase !== 'closed') {
+      const live = safe(() => room.match?.phase === 'playing', false);
+      if (live && phase === 'lobby') phase = 'match';
+      else if (!live && phase === 'match' && safe(() => room.match?.phase === 'lobby', false)) toLobby();
+    }
+    if (document.body.dataset.phase !== phase) document.body.dataset.phase = phase; // for tests that watch the screens
     let u = 0.18;
     let clockU = 0.5;
     lastInfo = null;

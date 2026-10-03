@@ -11,9 +11,9 @@ import { isOut, stage, smokeBetween, FLAG } from './rules.js';
 import { dist, wrap } from './geom.js';
 
 export const SKILL = {
-  novice: { loud: 2.4, imp: 2.6, see: 10, notice: 0.09, dev: 2.8, confirm: 1, probe: 0.15, sprint: 0.4, rt: 0.95, rtSd: 0.45, miss: 0.15, low: 8, rest: [8, 18], first: [6, 22], confuse: 0.55, misread: 0.55, lose: 0.7, fp: 0.12, decay: 0.12, watch: [4, 8], smart: 0 },
+  novice: { loud: 3.0, imp: 2.6, see: 7.5, notice: 0.07, dev: 2.8, confirm: 1, probe: 0.15, sprint: 0.4, rt: 0.95, rtSd: 0.45, miss: 0.15, low: 8, rest: [8, 18], first: [6, 22], confuse: 0.55, misread: 0.55, lose: 0.7, fp: 0.12, decay: 0.12, watch: [4, 8], smart: 0 },
   adept: { loud: 1, imp: 1.4, see: 15, notice: 0.15, dev: 1.9, confirm: 1.5, probe: 0.5, sprint: 0.12, rt: 0.78, rtSd: 0.25, miss: 0.05, low: 30, rest: [12, 24], first: [20, 42], confuse: 0.25, misread: 0.15, lose: 0.32, fp: 0.02, decay: 0.07, watch: [6, 12], smart: 0.5 },
-  master: { loud: 0.55, imp: 1.3, see: 19, notice: 0.24, dev: 1.3, confirm: 1.6, probe: 0.75, sprint: 0.03, rt: 0.75, rtSd: 0.14, miss: 0.01, low: 35, rest: [12, 24], first: [20, 42], confuse: 0.2, misread: 0.05, lose: 0.2, fp: 0.012, decay: 0.05, watch: [8, 14], smart: 1 },
+  master: { loud: 0.55, imp: 1.3, see: 19, notice: 0.28, dev: 1.3, confirm: 1.6, probe: 0.75, sprint: 0.03, rt: 0.75, rtSd: 0.14, miss: 0.01, low: 35, rest: [12, 24], first: [20, 42], confuse: 0.2, misread: 0.05, lose: 0.2, fp: 0.03, decay: 0.05, watch: [8, 14], smart: 1 },
 };
 // Behaviours for the balance harness: a bot that never leaves its slot, and one that unmasks anything in reach.
 export const STYLES = { normal: 0, patient: 1, brute: 2 };
