@@ -54,6 +54,12 @@ test('names are cleaned and clamped; loadouts respect what a player owns', () =>
   assert.equal(rules.cleanName('  A very very long name indeed, far too long  ').length, 24);
   assert.equal(rules.cleanName(''), 'Masker');
   assert.equal(rules.cleanName({}), 'Masker');
+  // Name collisions: everyone ends up with a different name, still within the limit.
+  const S = rules.newRound({ mid: 'm', n: 1, mode: 'masq', plaza: 0, seed: 3, crowd: 9, minutes: 5, skill: 'adept', loadouts: 'standard', bots: true, humans: [{ id: 'a', name: 'Ann' }, { id: 'b', name: 'ann' }, { id: 'c', name: 'X'.repeat(40) }, { id: 'd', name: 'X'.repeat(30) }] });
+  const names = Object.values(S.r.m).map((m) => m.nm.toLowerCase());
+  assert.equal(new Set(names).size, names.length);
+  assert.equal(S.r.m.a.nm, 'Ann');
+  assert.ok(Object.values(S.r.m).every((m) => m.nm.length <= 24));
   const R = rng(1);
   assert.deepEqual(rules.pickLoadout(false, ['swap', 'smoke'], ['smoke', 'decoy', 'opera'], R), ['smoke', 'decoy']);
   assert.deepEqual(rules.pickLoadout(false, ['opera', 'opera'], ['smoke', 'decoy', 'opera'], R), ['opera', 'smoke']);

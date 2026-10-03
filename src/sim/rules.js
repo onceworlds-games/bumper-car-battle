@@ -66,13 +66,22 @@ export function newRound(cfg) {
   const all = [...humans.map((h) => ({ ...h, bot: false })), ...bots.map((b) => ({ ...b, bot: true }))];
   const order = R.shuffle([...TROUPES.keys()]);
   const used = new Set();
+  // Two maskers never share a name on the results: a later one gets a number (players come before bots).
+  const taken = new Set();
+  const uniqueName = (raw) => {
+    const base = cleanName(raw);
+    let nm = base;
+    for (let k = 2; taken.has(nm.toLowerCase()); k++) nm = `${base.slice(0, LIMITS.names - String(k).length - 1).trimEnd()} ${k}`;
+    taken.add(nm.toLowerCase());
+    return nm;
+  };
   all.forEach((p, i) => {
     const tr = order[i % TROUPES.length];
     let sl = R.int(n);
     while (used.has(tr * n + sl)) sl = (sl + 1) % n;
     used.add(tr * n + sl);
     const ab = pickLoadout(S.r.chaos, p.ab, p.unlocked, R, p.bot ? skill : null);
-    S.r.m[p.id] = { tr, sl, nm: cleanName(p.name), b: p.bot ? 1 : 0, sk: p.bot ? p.skill : undefined, imp: p.imp ? 1 : 0, ab };
+    S.r.m[p.id] = { tr, sl, nm: uniqueName(p.name), b: p.bot ? 1 : 0, sk: p.bot ? p.skill : undefined, imp: p.imp ? 1 : 0, ab };
     S.rs[p.id] = fresh();
     S.sc[p.id] = { pts: 0, unm: 0, faux: 0, caught: 0, close: 0, wrong: 0, hush: 0, best: 0, streak: 0 };
   });

@@ -511,7 +511,8 @@ body {
   inset: 0;
   display: grid;
   place-items: center;
-  padding: calc(64px + var(--safe-t)) 16px calc(24px + var(--safe-b));
+  /* 88 px stay clear at the top for the platform's own strip. */
+  padding: calc(88px + var(--safe-t)) 16px calc(24px + var(--safe-b));
   opacity: 0;
   transition: opacity 0.35s ease;
 }
