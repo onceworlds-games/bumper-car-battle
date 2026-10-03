@@ -18,6 +18,9 @@ export const TROUPES = [
   { id: 'jolly', name: 'Jolly', robe: 0x3d8b4f, trim: 0xe8c547, mask: 0xf4efe2 },
 ];
 
+/** "a Gatto", "an Arlecchino". */
+export const aTroupe = (tr) => `${/^[aeiou]/i.test(TROUPES[tr]?.name ?? '') ? 'an' : 'a'} ${TROUPES[tr]?.name ?? 'Masker'}`;
+
 export const CROWD = { light: 6, normal: 9, packed: 12 }; // revellers per troupe
 
 export const POISE = {

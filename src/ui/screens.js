@@ -1,7 +1,7 @@
 // The cards between moments: the title, the assignment (your costume, your quarry, your two tricks), the Powder Room,
 // the results, the final podium, a closed room. One overlay at a time; text always through textContent.
 import { bust, glyph, makeCanvas, drawBust } from './icons.js';
-import { TROUPES, ABILITIES, ABILITY_IDS } from '../sim/const.js';
+import { TROUPES, ABILITIES, ABILITY_IDS, aTroupe } from '../sim/const.js';
 import { avatarUrl } from '../platform.js';
 
 const el = (tag, cls, parent, text) => {
@@ -69,7 +69,7 @@ export function createScreens(root) {
           el('h1', '', o, 'Carnevale');
           el('div', 'rule', o);
           const row = el('div', 'row', o);
-          const enter = button(row, 'Enter', 'big', onEnter, 'Enter');
+          const enter = button(row, 'Enter', 'big', onEnter);
           setTimeout(() => enter.focus({ preventScroll: true }), 50);
         },
         { dim: false },
@@ -94,7 +94,7 @@ export function createScreens(root) {
           const d = el('div', '', duo);
           d.appendChild(bust(a.quarry.tr, 72));
           el('div', 'name', d, a.quarry.name);
-          el('div', 'sub', d, `a ${TROUPES[a.quarry.tr].name}`);
+          el('div', 'sub', d, aTroupe(a.quarry.tr));
         } else if (a.caseFile) {
           const q = el('div', 'sect', cols);
           el('div', 'caps', q, 'The case');
