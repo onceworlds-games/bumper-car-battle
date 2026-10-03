@@ -16,7 +16,7 @@ const SCENES = {
   // The cover: the plaza at golden hour, a troupe of Gatti in the sun, and one figure walking where no reveller would.
   thumb1: { plaza: 0, seed: 23, n: 9, t: 94, u: 0.4, eye: [7, 1.8, 6], at: [-5, 1.6, -1], fov: 40, title: true, odd: { tr: 5, x: 0.9, z: 4.2, h: 0.35 } },
   // The unmask: a fan snaps, a mask flies, confetti.
-  thumb2: { plaza: 0, seed: 9, n: 9, t: 33, u: 0.5, eye: [-3.6, 0.9, 5.8], at: [-0.4, 1.7, 2.2], fov: 46, unmask: true },
+  thumb2: { plaza: 0, seed: 9, n: 9, t: 33, u: 0.5, eye: [-2.9, 0.95, 5.9], at: [-0.5, 1.7, 2.2], fov: 44, unmask: true },
   // The Hush: midnight, fireworks over a crowd that has stopped to look up.
   thumb3: { plaza: 0, seed: 23, n: 9, t: 71, u: 1, hush: true, eye: [-1.5, 2.1, 12.5], at: [-7, 8.2, -10], fov: 60, shells: [[-14, 24, -16], [1, 22, -15], [-7, 31, -26], [9, 19, -9], [-23, 21, -6], [-4, 27, -9]] },
   // The Quay at golden hour: the sun between the columns, troupes on the waterfront, the lagoon at the edge.
@@ -143,8 +143,9 @@ function icon() {
     cam.aspect = 1;
     cam.updateProjectionMatrix();
     stage.sky.set(0.2, 1);
-    stage.sky.hemi.intensity = 1.6;
-    stage.sky.sun.intensity = 2.4;
+    stage.figures.setNight(0.2, { sunDir: new THREE.Vector3(0, 0, -1), sun: { color: new THREE.Color(0), intensity: 0 } }); // no rim light on the icon
+    stage.sky.hemi.intensity = 1.5;
+    stage.sky.sun.intensity = 1.7;
     stage.sky.sun.position.set(40, 60, 70);
     stage.R.renderer.render(stage.scene, cam);
     if (++frames === 6) window.__posterReady = true;
