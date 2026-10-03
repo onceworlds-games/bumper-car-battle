@@ -74,6 +74,9 @@ test('requests: wrong round, wrong shapes and absurd numbers are refused or clam
   assert.equal(p.z, -200);
   assert.equal(p.f, 15);
   assert.equal(p.b.length, 12);
+  const bn = readPresence({ s: 'w', bn: 99 }).bn;
+  assert.ok(Number.isInteger(bn) && bn >= 0 && bn <= 7);
+  assert.equal(readPresence({ s: 'w', bn: 'gold' }).bn, 0);
 });
 
 test('saves: missing, empty, corrupt, older and newer all load', () => {
@@ -90,7 +93,9 @@ test('saves: missing, empty, corrupt, older and newer all load', () => {
   assert.equal(corrupt.stats.unmasks, 0);
   assert.deepEqual(corrupt.credited, ['a']);
   // A save from a newer version keeps what this one understands and ignores the rest.
-  const newer = parseProfile({ v: 7, xp: 9000, loadout: ['swap', 'lantern'], pose: 'spin', future: { x: 1 }, rehearsed: 1 });
+  assert.equal(corrupt.banner, 'crimson');
+  const newer = parseProfile({ v: 7, xp: 9000, loadout: ['swap', 'lantern'], pose: 'spin', banner: 'lagoon', future: { x: 1 }, rehearsed: 1 });
+  assert.equal(newer.banner, 'lagoon');
   assert.equal(newer.xp, 9000);
   assert.deepEqual(newer.loadout, ['swap', 'lantern']);
   assert.equal(newer.rehearsed, 1);

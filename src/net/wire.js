@@ -218,6 +218,7 @@ export function readPresence(v) {
     z: num(v.z, -200, 200, 0),
     h: num(v.h, -50, 50, 0),
     f: int(v.f, 0, 15, 0),
+    bn: int(v.bn, 0, 7, 0),
     tr: int(v.tr, -1, TROUPES.length - 1, -1),
     sl: int(v.sl, -1, 11, -1),
     w: Array.isArray(v.w) ? [int(v.w[0], -1, 1e9, -1), ['ok', 'eager', 'stiff'].includes(v.w[1]) ? v.w[1] : 'ok', num(v.w[2], 0, 1e5, 0)] : null,

@@ -23,6 +23,15 @@ export const POSES = [
   { id: 'clap', name: 'Applause', level: 15 },
 ];
 
+/** The pennant that hangs by your name on the results and the podium (never on your costume: that would be a tell). */
+export const BANNERS = [
+  { id: 'crimson', name: 'Crimson Banner', level: 1, colors: ['#9e1b32', '#f2b544'] },
+  { id: 'lagoon', name: 'Lagoon Banner', level: 4, colors: ['#0e4d5c', '#f1e3c8'] },
+  { id: 'gilt', name: 'Gilt Banner', level: 9, colors: ['#d8a032', '#241a17'] },
+  { id: 'harlequin', name: 'Harlequin Banner', level: 14, colors: ['#b3263a', '#1f7a80'] },
+  { id: 'midnight', name: 'Midnight Banner', level: 20, colors: ['#12263a', '#f2b544'] },
+];
+
 /** XP needed to go from level n to n + 1. */
 export const xpStep = (n) => 250 + 100 * (n - 1);
 export function levelFor(xp) {
@@ -45,6 +54,7 @@ export function freshProfile() {
     loadout: ['smoke', 'decoy'],
     burst: 'confetti',
     pose: 'bow',
+    banner: 'crimson',
     rehearsed: 0,
     hints: {},
     credited: [],
@@ -63,6 +73,7 @@ export function parseProfile(raw) {
   }
   if (BURSTS.some((b) => b.id === raw.burst)) p.burst = raw.burst;
   if (POSES.some((b) => b.id === raw.pose)) p.pose = raw.pose;
+  if (BANNERS.some((b) => b.id === raw.banner)) p.banner = raw.banner;
   p.rehearsed = raw.rehearsed ? 1 : 0;
   if (raw.hints && typeof raw.hints === 'object') for (const [k, v] of Object.entries(raw.hints).slice(0, 40)) p.hints[String(k).slice(0, 24)] = num(v, 0, 99, 0);
   if (Array.isArray(raw.credited)) p.credited = raw.credited.filter((x) => typeof x === 'string').slice(-12).map((x) => x.slice(0, 90));
@@ -189,6 +200,10 @@ export function createProgress() {
         for (const q of POSES) if (q.level === l) {
           unlocked.push(q.name);
           profile.pose = q.id;
+        }
+        for (const q of BANNERS) if (q.level === l) {
+          unlocked.push(q.name);
+          profile.banner = q.id;
         }
       }
       if (after >= 10) P.badge('level-10');

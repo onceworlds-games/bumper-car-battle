@@ -131,6 +131,7 @@ export function createSession(room, host, hooks = {}) {
       const out = { s: p.s, r: p.r ?? '', x: r2(p.x ?? 0), z: r2(p.z ?? 0), h: r2(unwrapped), f: p.f | 0, tr: p.tr ?? -1, sl: p.sl ?? -1 };
       if (p.w) out.w = p.w;
       if (p.e) out.e = p.e;
+      if (p.bn) out.bn = p.bn;
       if (host.active()) {
         const b = host.botPresence();
         if (b) {
@@ -190,6 +191,8 @@ export function createSession(room, host, hooks = {}) {
       out.e = latest?.e ?? null;
       return out;
     },
+    /** The banner a player hangs by their name (an index into BANNERS), from their own presence. */
+    bannerOf: (id) => readPresence(safe(() => room.players.get(id)?.presence, null))?.bn ?? 0,
     isLocked: (f) => (f & FLAG.locked) !== 0,
   };
   return session;

@@ -24,6 +24,18 @@ const button = (parent, text, cls, onClick, key) => {
   return b;
 };
 
+/** A name with its owner's banner hanging before it. */
+const named = (parent, cls, name, colors) => {
+  const n = el(parent.tagName === 'TR' ? 'td' : 'div', cls, parent);
+  if (colors) {
+    const p = el('i', 'pennant', n);
+    p.style.setProperty('--pa', colors[0]);
+    p.style.setProperty('--pb', colors[1]);
+  }
+  n.append(document.createTextNode(name));
+  return n;
+};
+
 export function createScreens(root) {
   let current = null;
   let kind = '';
@@ -157,7 +169,7 @@ export function createScreens(root) {
           el('td', 'rank', tr, String(r.place));
           const tdI = el('td', '', tr);
           tdI.appendChild(bust(r.tr, 28));
-          const n = el('td', 'n', tr, r.name);
+          const n = named(tr, 'n', r.name, r.banner);
           if (r.bot) el('span', 'bot', n, ' (bot)');
           el('td', '', tr, r.unm ? `${r.unm} unmasked` : '');
           el('td', '', tr, String(r.pts));
@@ -194,7 +206,7 @@ export function createScreens(root) {
           col.appendChild(img);
           if (p.bot) fallback();
           else Promise.resolve(avatarUrl(p.id)).then((u) => (u ? (img.src = u) : fallback())).catch(fallback);
-          el('div', 'nm', col, p.name);
+          named(col, 'nm', p.name, p.banner);
           const st = el('div', 'step', col, String([2, 1, 3][i]));
           st.style.height = `${[46, 64, 34][i]}px`;
         });
@@ -212,7 +224,7 @@ export function createScreens(root) {
           for (const r of rows.slice(3, 10)) {
             const tr = el('tr', r.me ? 'me' : '', t);
             el('td', 'rank', tr, String(r.place));
-            el('td', 'n', tr, r.name + (r.bot ? ' (bot)' : ''));
+            named(tr, 'n', r.name + (r.bot ? ' (bot)' : ''), r.banner);
             el('td', '', tr, String(r.pts));
           }
         }

@@ -9,7 +9,7 @@ import { createPlayer } from './game/player.js';
 import { createRoundView } from './game/round.js';
 import { createEvents } from './game/events.js';
 import { createMatchUI } from './game/match.js';
-import { createProgress } from './game/progress.js';
+import { createProgress, BANNERS } from './game/progress.js';
 import { createRehearsal } from './game/rehearsal.js';
 import { createSession } from './net/session.js';
 import { createHost } from './net/host.js';
@@ -388,6 +388,7 @@ function boot() {
         const at = safe(() => room.matchNow(), 0);
         pres = out ? { s: 'k', r: mr.rid } : { s: 'p', r: mr.rid, x: player.mv.x, z: player.mv.z, h: player.mv.h, f: player.flags(), tr: mineM.tr, sl: mineM.sl, w: player.st.answer ?? undefined, e: e ? [e[0], at - e[1] * 1000] : undefined };
       } else pres = { s: 'w', r: mr?.rid ?? '' };
+      pres.bn = Math.max(0, BANNERS.findIndex((b) => b.id === progress.profile.banner));
       session.presence(pres, nowMs);
     }
     // Footsteps under you, and the murmur of the crowd.

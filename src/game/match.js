@@ -10,7 +10,7 @@ import { blocked } from './player.js';
 import { projected } from './round.js';
 import { BARKS } from './events.js';
 import { sfx, near } from '../audio/sfx.js';
-import { unlockedAbilities, POSES } from './progress.js';
+import { unlockedAbilities, POSES, BANNERS } from './progress.js';
 import { safe } from '../platform.js';
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -354,9 +354,16 @@ export function createMatchUI(d) {
     });
   }
 
+  /** A player's banner colours (bots hang none). */
+  function bannerOf(id, bot) {
+    if (bot) return null;
+    const i = id === session.me ? BANNERS.findIndex((b) => b.id === progress.profile.banner) : session.bannerOf(id);
+    return (BANNERS[i] ?? BANNERS[0]).colors;
+  }
+
   function openResults(r, t) {
     const sc = session.scores;
-    const rows = standings(sc, Object.keys(r.m)).map((row) => ({ ...row, name: r.m[row.id].nm, bot: !!r.m[row.id].b, tr: r.m[row.id].tr, unm: sc[row.id]?.unm ?? 0, me: row.id === session.me }));
+    const rows = standings(sc, Object.keys(r.m)).map((row) => ({ ...row, name: r.m[row.id].nm, bot: !!r.m[row.id].b, tr: r.m[row.id].tr, unm: sc[row.id]?.unm ?? 0, me: row.id === session.me, banner: bannerOf(row.id, !!r.m[row.id].b) }));
     const g = session.game;
     const last = g && g.n >= g.rounds;
     const solved = r.case?.solved;
@@ -365,7 +372,7 @@ export function createMatchUI(d) {
   }
 
   function openFinal(g) {
-    const rows = standings(g.tot, Object.keys(g.tot)).map((row) => ({ ...row, name: g.tot[row.id].nm, bot: !!g.tot[row.id].b, tr: 0, me: row.id === session.me }));
+    const rows = standings(g.tot, Object.keys(g.tot)).map((row) => ({ ...row, name: g.tot[row.id].nm, bot: !!g.tot[row.id].b, tr: 0, me: row.id === session.me, banner: bannerOf(row.id, !!g.tot[row.id].b) }));
     const r = session.round;
     for (const row of rows) row.tr = r?.m[row.id]?.tr ?? 0;
     const aw = awardsOf(g.tot);

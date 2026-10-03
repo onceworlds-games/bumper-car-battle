@@ -729,6 +729,15 @@ table.board .bot {
   margin: 6px auto;
   display: block;
 }
+.pennant {
+  display: inline-block;
+  width: 10px;
+  height: 15px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  background: linear-gradient(90deg, var(--pa) 0 30%, var(--pb) 30% 70%, var(--pa) 70%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+}
 /* ---------- the cards between moments, printed on the ball's own card stock ---------- */
 .stock {
   --print: #241a17;
