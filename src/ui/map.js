@@ -157,11 +157,14 @@ function paintBase(plaza, W, H, sc) {
   for (const d of plaza.districts) {
     const [cx, cz] = d.at[0];
     const name = d.name.replace(/^the /, '');
+    // Names near the edge slide inwards so none is cut off.
+    const half = g.measureText(name).width / 2 + 6;
+    const x = Math.min(W - half, Math.max(half, X(cx)));
     g.fillStyle = 'rgba(26,20,20,0.75)';
-    g.fillText(name, X(cx) + 1, Z(cz) + 1);
+    g.fillText(name, x + 1, Z(cz) + 1);
     g.fillStyle = '#1a1414';
     g.globalAlpha = 0.9;
-    g.fillText(name, X(cx), Z(cz));
+    g.fillText(name, x, Z(cz));
     g.globalAlpha = 1;
   }
   g.strokeStyle = '#f2b544';

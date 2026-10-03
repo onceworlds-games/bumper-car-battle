@@ -896,6 +896,7 @@ body.reduced .stock {
 .mapwrap {
   position: fixed;
   inset: 0;
+  z-index: 5;
   display: grid;
   place-items: center;
   padding: calc(64px + var(--safe-t)) 16px calc(16px + var(--safe-b));
