@@ -94,6 +94,7 @@ async function boot() {
 
   // The attract plaza (title and lobby): a crowd at golden hour, the camera drifting round.
   const attract = { plaza: PLAZAS[0], crowd: null };
+  let lobbyK = 0;
 
   function makeMatch(sess, rehearsing = false) {
     const view = createRoundView();
@@ -388,9 +389,11 @@ async function boot() {
       if (!manualOrbit) cam.st.yaw += dt * 0.04;
       // Low, round the fountain: the crowd walks across the houses and the low sun, the name sits in the sky above.
       cam.st.pitch = 0.1 + 0.025 * Math.sin(now * 0.07);
-      cam.st.dist = 10.5;
+      cam.st.dist = 10.5 + lobbyK * 0.6;
       cam.st.opera = 0;
-      cam.update(dt, -6, 0.5, 0, attract.plaza, { now });
+      // In the lobby the platform's card stands in the middle: the view slides so the fountain and the crowd sit beside it.
+      lobbyK += ((phase === 'lobby' ? 3.2 : 0) - lobbyK) * Math.min(1, dt * 2);
+      cam.update(dt, -6 + Math.cos(cam.st.yaw) * lobbyK, 0.5, -Math.sin(cam.st.yaw) * lobbyK, attract.plaza, { now });
       drawFigures(stage, { time: now, crowd, buf, skip: null, plaza: attract.plaza, cam: { x: cam.cam.position.x, z: cam.cam.position.z, fx: cam.st.tx, fz: cam.st.tz } });
       stage.fx.rings([]);
       stage.fx.lanterns([]);

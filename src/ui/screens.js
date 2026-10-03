@@ -188,8 +188,13 @@ export function createScreens(root) {
           tdI.appendChild(bust(r.tr, 28));
           const n = named(tr, 'n', r.name, r.banner);
           if (r.bot) el('span', 'bot', n, ' (bot)');
-          el('td', '', tr, r.unm ? `${r.unm} unmasked` : '');
-          el('td', '', tr, String(r.pts));
+          const um = el('td', 'unm', tr);
+          if (r.unm) {
+            um.append(document.createTextNode(String(r.unm)));
+            el('span', 'word', um, ' unmasked');
+            el('span', 'x', um, '×');
+          }
+          el('td', 'pts', tr, String(r.pts));
         }
         if (cases?.length) {
           // Spot the Mask: who was found and who got away.

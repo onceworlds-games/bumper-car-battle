@@ -767,13 +767,25 @@ table.board td {
 }
 table.board td.n {
   text-align: left;
-  max-width: 160px;
+  max-width: min(160px, 30vw);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 table.board tr.me td {
   color: var(--gold);
   font-weight: 700;
+}
+table.board td.x,
+table.board .x {
+  display: none;
+}
+@media (max-width: 480px) {
+  table.board .word {
+    display: none;
+  }
+  table.board .x {
+    display: inline;
+  }
 }
 table.board td.rank {
   font: italic 700 20px/1 var(--display);
