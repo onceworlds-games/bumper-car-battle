@@ -69,6 +69,13 @@ function body(t, extras) {
 }
 
 const face = (d = 0.15) => [0, HEAD_Y, d];
+/** Two dark eye-slits on a mask, so a face reads as one up close; they fall away with it. */
+const eyes = (hex = 0x15110f, y = 0.03, z = 0.166) => [
+  finish(place(sphere(0.026, 6, 5), [0.062, HEAD_Y + y, z], [0, 0.2, 0], [1.5, 0.7, 0.45]), hex, PART.mask),
+  finish(place(sphere(0.026, 6, 5), [-0.062, HEAD_Y + y, z], [0, -0.2, 0], [1.5, 0.7, 0.45]), hex, PART.mask),
+];
+/** A ruffled collar in the troupe's trim. */
+const ruff = (hex) => finish(place(torus(0.17, 0.045, 12), [0, NECK_Y - 0.01, 0], [Math.PI / 2, 0, 0]), hex, PART.torso);
 
 const BUILD = {
   medico(t) {
@@ -107,6 +114,7 @@ const BUILD = {
       finish(place(cyl(0.12, 0.13, 0.08, 12), [0, HEAD_Y + 0.17, -0.02]), t.trim, PART.hat),
       finish(place(lathe([[0.001, 0.0], [0.15, -0.02], [0.2, -0.25], [0.21, -0.32]], 10), [0, HEAD_Y + 0.16, -0.05], [0.12, 0, 0]), 0x101d22, PART.hat),
       finish(place(sphere(0.04, 6, 5), [0.1, HEAD_Y + 0.2, 0.04]), 0xe9dcbf, PART.hat),
+      ruff(0xe9dcbf),
     ];
   },
   volto(t) {
@@ -119,6 +127,7 @@ const BUILD = {
       finish(place(cyl(0.115, 0.115, 0.04, 10), [0, HEAD_Y + 0.45, -0.02]), t.trim, PART.hat),
       finish(place(sphere(0.045, 7, 5), [0, HEAD_Y + 0.5, -0.02]), t.trim, PART.hat),
       finish(place(torus(0.17, 0.045, 12), [0, NECK_Y - 0.01, 0], [Math.PI / 2, 0, 0]), 0xfbf6ea, PART.torso),
+      ...eyes(0x3a2c18, 0.03, 0.176),
     ];
   },
   colombina(t) {
@@ -131,6 +140,8 @@ const BUILD = {
       plume(0.05, 0.5, 0.03, t.trim),
       plume(0.35, 0.36, -0.05, 0xb3263a),
       finish(place(sphere(0.045, 7, 5), [0.07, HEAD_Y + 0.15, 0.02]), 0xf2b544, PART.hat),
+      ...eyes(0x2a1a14, 0.045, 0.172),
+      ruff(0xf6d6b8),
     ];
   },
   gatto(t) {
@@ -142,6 +153,8 @@ const BUILD = {
       finish(place(cone(0.07, 0.17, 4), [-0.1, HEAD_Y + 0.17, 0.0], [0, 0, 0.35]), t.mask, PART.hat),
       finish(place(cone(0.035, 0.1, 4), [0.1, HEAD_Y + 0.16, 0.025], [0, 0, -0.35]), 0xe58c8a, PART.hat),
       finish(place(cone(0.035, 0.1, 4), [-0.1, HEAD_Y + 0.16, 0.025], [0, 0, 0.35]), 0xe58c8a, PART.hat),
+      ...eyes(0x231d1f, 0.035, 0.17),
+      ruff(0xf3e2c4),
       finish(place(cyl(0.035, 0.05, 0.62, 6), [0, 0.42, -0.42], [-0.9, 0, 0]), t.robe, PART.skirt, 0.85),
       finish(place(sphere(0.05, 6, 5), [0, 0.64, -0.62]), t.trim, PART.skirt),
     ];
@@ -157,6 +170,7 @@ const BUILD = {
       finish(place(cyl(0.13, 0.15, 0.12, 9), [0, HEAD_Y + 0.21, -0.01]), 0x0f1420, PART.hat),
       finish(place(cyl(0.305, 0.305, 0.02, 3), [0, HEAD_Y + 0.185, -0.01], [0, Math.PI / 6, 0]), 0xd8a032, PART.hat, 0.7),
       finish(lathe([[0.33, 0.9], [0.31, 1.1], [0.26, 1.23], [0.1, 1.32]], 10), 0x111a2c, PART.torso),
+      ...eyes(0x15110f, 0.035, 0.168),
     ];
   },
   jolly(t) {
