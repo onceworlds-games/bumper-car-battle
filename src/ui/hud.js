@@ -87,7 +87,7 @@ export function createHud(root, labelsRoot, { onCard, onChip, onHome }) {
   let whyTimer = 0;
   let lastQ = '';
   let lastFan = '';
-  let top = false;
+  let top = '';
   const tags = new Map();
 
   const hud = {
@@ -98,15 +98,21 @@ export function createHud(root, labelsRoot, { onCard, onChip, onHome }) {
         vignette.classList.remove('beat');
       }
     },
-    layout(touch, w, h) {
+    /** Touch: the cluster goes to the top (the thumbs own the lower corners), below the quarry card when narrow. */
+    layout(touch, w) {
       const t = !!touch;
-      if (t === top) return;
-      top = t;
+      const narrow = t && w < 560;
+      const key = `${t}:${narrow}`;
+      if (key === top) return;
+      top = key;
       cluster.classList.toggle('top', t);
+      cluster.classList.toggle('narrow', narrow);
       hint.classList.toggle('top', t);
+      hint.classList.toggle('narrow', narrow);
       for (const ch of chips) ch.key.style.display = t ? 'none' : '';
-      void w;
-      void h;
+      fanC.style.width = t ? '126px' : '168px';
+      fanC.style.height = t ? '69px' : '92px';
+      document.body.classList.toggle('touch', t);
     },
     /** The quarry card. info: { tr, name, where, where2, clock } or { caseFile: [{tr, found}], where, clock } */
     quarry(info) {

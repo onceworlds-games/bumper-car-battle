@@ -37,6 +37,7 @@ export function installTestHook(g) {
     skipRehearsal: () => g.rehearsal.active && g.stopRehearsal(true),
     ready: () => g.room?.setReady(true),
     verbs: g.verbs,
+    screens: g.screens,
   };
   if (params.get('test') !== 'auto') return;
   // The autopilot: in, ready, then wander between troupes, greet, and unmask what's in reach now and then.

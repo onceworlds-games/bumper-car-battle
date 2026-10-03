@@ -195,7 +195,7 @@ export function createMatchUI(d) {
       // ---- HUD ----
       const playing = !!me && !rs?.aud && !ctx.spectate;
       hud.show(playing && !out && want !== 'results' && want !== 'final' && st !== 'reveal');
-      hud.layout(ctx.touch);
+      hud.layout(ctx.touch, window.innerWidth);
       if (playing && !out) {
         const flust = rs && rs.fl > t;
         hud.poise(rs ? rs.p : 0, !!flust, ctx.now);

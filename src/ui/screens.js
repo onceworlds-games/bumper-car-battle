@@ -67,28 +67,33 @@ export function createScreens(root) {
     assign(a) {
       let chosen = [...a.chosen];
       const o = open('assign', (ov) => {
-        const card = el('div', 'card panel', ov);
-        el('div', 'caps', card, 'Tonight you are');
+        const card = el('div', 'card stock assign', ov);
+        const cols = el('div', 'cols', card);
+        const you = el('div', 'sect', cols);
+        el('div', 'caps', you, 'Tonight you are');
         const b = makeCanvas(112, 'bust');
         drawBust(b[1], a.tr, 0, 0, 112);
-        card.appendChild(b[0]);
-        el('h2', '', card, TROUPES[a.tr].name);
+        you.appendChild(b[0]);
+        el('h2', '', you, TROUPES[a.tr].name);
         if (a.quarry) {
-          el('div', 'caps', card, 'Your quarry').style.marginTop = '12px';
-          const duo = el('div', 'duo', card);
+          const q = el('div', 'sect', cols);
+          el('div', 'caps', q, 'Your quarry');
+          const duo = el('div', 'duo', q);
           const d = el('div', '', duo);
           d.appendChild(bust(a.quarry.tr, 72));
           el('div', 'name', d, a.quarry.name);
           el('div', 'sub', d, `a ${TROUPES[a.quarry.tr].name}`);
         } else if (a.caseFile) {
-          el('div', 'caps', card, 'The case').style.marginTop = '12px';
-          const duo = el('div', 'duo', card);
+          const q = el('div', 'sect', cols);
+          el('div', 'caps', q, 'The case');
+          const duo = el('div', 'duo', q);
           for (const tr of a.caseFile) duo.appendChild(bust(tr, 64));
-          el('div', 'sub', card, `${a.caseFile.length} impostors`);
+          el('div', 'sub', q, `${a.caseFile.length} impostors`);
         }
         if (a.picks.length) {
-          el('div', 'caps', card, a.chaos ? 'Chaos: your tricks' : 'Pick two').style.marginTop = '14px';
-          const row = el('div', 'picks', card);
+          const pk = el('div', 'sect', cols);
+          el('div', 'caps', pk, a.chaos ? 'Chaos: your tricks' : 'Pick two');
+          const row = el('div', 'picks', pk);
           const btns = [];
           for (const p of a.picks) {
             const btn = el('button', 'pick live', row);
@@ -123,17 +128,16 @@ export function createScreens(root) {
     },
     powder({ seconds }) {
       const o = open('powder', (ov) => {
-        const card = el('div', 'card panel', ov);
+        const card = el('div', 'card stock powder', ov);
         el('div', 'caps', card, 'Unmasked');
         el('h2', '', card, 'The Powder Room');
         const [c, g] = makeCanvas(150, 'mirror', 190);
         mirror(g, 150, 190);
         card.appendChild(c);
         el('div', 'sub', card, 'A fresh face, a new costume');
-        const left = el('div', 'caps', card);
-        left.style.marginTop = '10px';
+        el('div', 'caps next', card);
       });
-      const left = o.querySelector('.caps:last-child');
+      const left = o.querySelector('.caps.next');
       return {
         tick(sec) {
           if (left) left.textContent = `Back in ${Math.max(0, Math.ceil(sec))}`;
@@ -143,9 +147,10 @@ export function createScreens(root) {
     /** Round results: rows [{ id, name, bot, tr, pts, unm, faux, me, place }] */
     results({ title, sub, rows, next, nextLabel }) {
       const o = open('results', (ov) => {
-        const card = el('div', 'card panel', ov);
-        el('div', 'caps', card, sub);
-        el('h2', '', card, title);
+        const card = el('div', 'card stock results', ov);
+        const head = el('div', 'head', card);
+        el('div', 'caps', head, sub);
+        el('h2', '', head, title);
         const t = el('table', 'board', card);
         for (const r of rows.slice(0, 12)) {
           const tr = el('tr', r.me ? 'me' : '', t);
@@ -157,8 +162,7 @@ export function createScreens(root) {
           el('td', '', tr, r.unm ? `${r.unm} unmasked` : '');
           el('td', '', tr, String(r.pts));
         }
-        const f = el('div', 'caps', card);
-        f.style.marginTop = '12px';
+        const f = el('div', 'caps next', card);
         f.dataset.next = '1';
       });
       const f = o.querySelector('[data-next]');
@@ -171,9 +175,10 @@ export function createScreens(root) {
     /** The final podium: top: [{ id, name, pts, tr }], awards: [{ title, name }], onContinue for a private host. */
     final({ top, awards, onContinue, rows }) {
       const o = open('final', (ov) => {
-        const card = el('div', 'card panel', ov);
-        el('h2', '', card, top[0] ? top[0].name : 'Midnight');
-        const pod = el('div', 'podium', card);
+        const card = el('div', 'card stock final', ov);
+        const head = el('div', 'head', card);
+        el('h2', '', head, top[0] ? top[0].name : 'Midnight');
+        const pod = el('div', 'podium', head);
         const order = [top[1], top[0], top[2]];
         order.forEach((p, i) => {
           const col = el('div', '', pod);
@@ -194,15 +199,16 @@ export function createScreens(root) {
           st.style.height = `${[46, 64, 34][i]}px`;
         });
         if (awards.length) {
-          const aw = el('div', 'awards', card);
+          const aw = el('div', 'awards', head);
           for (const a of awards) {
             const d = el('div', 'award', aw);
             el('b', '', d, a.title);
             el('span', '', d, a.name);
           }
         }
-        if (rows?.length) {
-          const t = el('table', 'board', card);
+        const body = el('div', 'body', card);
+        if (rows?.length > 3) {
+          const t = el('table', 'board', body);
           for (const r of rows.slice(3, 10)) {
             const tr = el('tr', r.me ? 'me' : '', t);
             el('td', 'rank', tr, String(r.place));
@@ -210,12 +216,10 @@ export function createScreens(root) {
             el('td', '', tr, String(r.pts));
           }
         }
-        const f = el('div', 'caps', card);
-        f.style.marginTop = '12px';
+        const f = el('div', 'caps next', body);
         f.dataset.next = '1';
         if (onContinue) {
-          const row = el('div', '', card);
-          row.style.marginTop = '12px';
+          const row = el('div', 'go', body);
           button(row, 'Continue', '', onContinue, 'Enter');
         }
       });
@@ -228,10 +232,9 @@ export function createScreens(root) {
     },
     closed({ text, action, onAction }) {
       return open('closed', (ov) => {
-        const card = el('div', 'card panel', ov);
+        const card = el('div', 'card stock closed', ov);
         el('h2', '', card, text);
-        const row = el('div', '', card);
-        row.style.marginTop = '16px';
+        const row = el('div', 'go', card);
         button(row, action, 'big', onAction, 'Enter');
       });
     },

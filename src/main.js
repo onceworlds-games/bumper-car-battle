@@ -284,6 +284,7 @@ function boot() {
     enter,
     verbs,
     stage,
+    screens,
     progress,
     rehearsal,
     stopRehearsal,
@@ -297,6 +298,7 @@ function boot() {
     last = nowMs;
     const now = nowMs / 1000;
     const touch = touchMode();
+    if (touch !== document.body.classList.contains('touch')) document.body.classList.toggle('touch', touch);
     try {
       host?.tick();
     } catch (e) {
