@@ -105,7 +105,7 @@ export const sfx = {
   },
   clue() {
     if (!audio.ready) return;
-    [62, 69, 74, 77].forEach((n, i) => inst.pluck(midiHz(n), at(i * 0.07), 0.2, 'sfx'));
+    [62, 69, 74, 77].forEach((n, i) => inst.pluck(midiHz(n), at(i * 0.07), 0.13, 'sfx'));
   },
   /** A score in your favour: rising plucks; a loss, falling ones. */
   points(good) {
@@ -123,17 +123,17 @@ export const sfx = {
   },
   boom(vol = 1) {
     if (!audio.ready || vol <= 0) return;
-    inst.boom(at(), 0.35 * vol);
+    inst.boom(at(), 0.3 * vol);
   },
   reveal() {
     if (!audio.ready) return;
-    inst.accordion([midiHz(50), midiHz(57), midiHz(62), midiHz(65)], at(), 1.6, 0.14, 'sfx');
-    inst.noise(at(), 1.4, 6000, 0.6, 0.12, 'sfx', 'highpass', 0.5);
+    inst.accordion([midiHz(50), midiHz(57), midiHz(62), midiHz(65)], at(), 1.6, 0.1, 'sfx');
+    inst.noise(at(), 1.4, 6000, 0.6, 0.08, 'sfx', 'highpass', 0.5);
   },
   fanfare() {
     if (!audio.ready) return;
-    [62, 66, 69, 74, 78, 81].forEach((n, i) => inst.pluck(midiHz(n), at(i * 0.09), 0.3, 'sfx'));
-    inst.accordion([midiHz(62), midiHz(66), midiHz(69)], at(0.5), 1.4, 0.12, 'sfx');
+    [62, 66, 69, 74, 78, 81].forEach((n, i) => inst.pluck(midiHz(n), at(i * 0.09), 0.24, 'sfx'));
+    inst.accordion([midiHz(62), midiHz(66), midiHz(69)], at(0.5), 1.4, 0.09, 'sfx');
   },
 };
 

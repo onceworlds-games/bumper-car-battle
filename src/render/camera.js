@@ -7,6 +7,54 @@ import { floorY } from '../sim/plazas.js';
 const MIN_D = 3.2;
 const MAX_D = 17;
 const ROOF_CLEAR = 1.6; // the camera stays this far above a roof, or out of the way
+const MIN_REACH = 0.34; // never closer than this share of the distance unless something is right there
+const LIFTS = [0.2, 0.42, 0.75]; // higher views to try when the way behind you is shut
+const TURNS = [0.5, -0.5, 1.0, -1.0, 1.6, -1.6]; // and angles to swing round to
+
+/** How far along the line from (ax, ay, az) to (px, py, pz) the camera can go, 0..1, before it meets something. */
+function rayClear(plaza, nav, ax, ay, az, px, py, pz) {
+  const b = plaza.bounds;
+  const steps = 14;
+  const len = Math.hypot(px - ax, py - ay, pz - az);
+  let last = 0;
+  for (let i = 1; i <= steps; i++) {
+    const u = i / steps;
+    const sx = ax + (px - ax) * u;
+    const sz = az + (pz - az) * u;
+    const sy = ay + (py - ay) * u;
+    // Beyond the plaza are the houses: not below their roofs.
+    if (!(sx > b.x0 - 1.5 && sx < b.x1 + 1.5 && sz > b.z0 - 1.5 && sz < b.z1 + 1.5) && sy < 16) break;
+    let hit = false;
+    // Arcade roofs and the like: never above them looking down at the tiles, never inside the beams.
+    if (plaza.roofs) {
+      for (const rf of plaza.roofs) {
+        if (sy < (rf.lo ?? rf.h - 1.2) || sy > rf.h + ROOF_CLEAR) continue;
+        if (sx > rf.x0 - 0.5 && sx < rf.x1 + 0.5 && sz > rf.z0 - 0.5 && sz < rf.z1 + 0.5) {
+          hit = true;
+          break;
+        }
+      }
+    }
+    if (!hit) {
+      for (const o of nav.occluders) {
+        if (o.h + ROOF_CLEAR < sy) continue;
+        // Right at the start of the line, what you stand against doesn't count (you can't be inside it).
+        if (u * len < 1.4) {
+          const near = o.t === 'c' ? Math.hypot(ax - o.x, az - o.z) - o.r : Math.max(Math.abs(ax - o.x) - o.w / 2, Math.abs(az - o.z) - o.d / 2);
+          if (near < 1.2) continue;
+        }
+        const d = o.t === 'c' ? Math.hypot(sx - o.x, sz - o.z) - o.r : Math.max(Math.abs(sx - o.x) - o.w / 2, Math.abs(sz - o.z) - o.d / 2);
+        if (d < 0.4) {
+          hit = true;
+          break;
+        }
+      }
+    }
+    if (hit) break;
+    last = u;
+  }
+  return last;
+}
 
 export function createCamera() {
   const cam = new THREE.PerspectiveCamera(52, 1, 0.1, 900);
@@ -21,11 +69,18 @@ export function createCamera() {
     shake: 0,
     manualAt: -99,
     look: { yaw: 0, pitch: 0 },
+    reach: 1,
+    lift: 0,
+    turn: 0,
   };
   const out = new THREE.Vector3();
   const api = {
     cam,
     st,
+    /** The way the camera really looks (the yaw you steer by): the orbit plus any swing round an obstacle. */
+    heading() {
+      return st.yaw + st.turn;
+    },
     aspect(w, h) {
       cam.aspect = w / h;
       api.fov();
@@ -52,6 +107,9 @@ export function createCamera() {
       st.tx = x;
       st.ty = y + 1.4;
       st.tz = z;
+      st.reach = 1;
+      st.lift = 0;
+      st.turn = 0;
       if (heading !== undefined) st.yaw = heading + Math.PI;
     },
     /**
@@ -72,57 +130,58 @@ export function createCamera() {
       }
       const opera = st.opera;
       const dist = st.dist * (1 - opera * 0.15);
-      const cp = Math.cos(st.pitch);
-      let px = st.tx + Math.sin(st.yaw) * cp * dist;
-      let pz = st.tz + Math.cos(st.yaw) * cp * dist;
-      let py = st.ty + Math.sin(st.pitch) * dist;
-      // Pull in from walls and tall things (never through the houses around the plaza).
+      let px;
+      let py;
+      let pz;
+      // The camera sits behind and above you. A wall, a column or a roof in the way brings it in, or lifts it over
+      // (a higher view of the same spot) rather than letting it crowd your shoulder.
+      const at = (pitch, d, turn = 0) => {
+        const c = Math.cos(pitch);
+        px = st.tx + Math.sin(st.yaw + turn) * c * d;
+        pz = st.tz + Math.cos(st.yaw + turn) * c * d;
+        py = st.ty + Math.sin(pitch) * d;
+      };
       if (plaza) {
         const nav = navFor(plaza);
-        const b = plaza.bounds;
-        const steps = 14;
-        let lastOk = 0;
-        for (let i = 1; i <= steps; i++) {
-          const u = i / steps;
-          const sx = st.tx + (px - st.tx) * u;
-          const sz = st.tz + (pz - st.tz) * u;
-          const sy = st.ty + (py - st.ty) * u;
-          const inside = sx > b.x0 - 1.5 && sx < b.x1 + 1.5 && sz > b.z0 - 1.5 && sz < b.z1 + 1.5;
-          let blocked = !inside && sy < 16;
-          if (!blocked && plaza.roofs) {
-            // Arcade roofs: never above them looking down at the tiles, never inside the beams.
-            for (const rf of plaza.roofs) {
-              if (sy < rf.h - 1.2 || sy > rf.h + ROOF_CLEAR) continue;
-              if (sx > rf.x0 - 0.5 && sx < rf.x1 + 0.5 && sz > rf.z0 - 0.5 && sz < rf.z1 + 0.5) {
-                blocked = true;
-                break;
-              }
+        const reach = (pitch, turn) => {
+          at(pitch, dist, turn);
+          return rayClear(plaza, nav, st.tx, st.ty, st.tz, px, py, pz);
+        };
+        let want = reach(st.pitch, 0);
+        let lift = 0;
+        let turn = 0;
+        if (want < 1) {
+          let best = want;
+          const tryIt = (l, tn) => {
+            const u = reach(Math.min(1.45, st.pitch + l), tn);
+            if (u > best + 1e-6) {
+              best = u;
+              lift = l;
+              turn = tn;
             }
-          }
-          if (!blocked) {
-            for (const o of nav.occluders) {
-              if (o.h + ROOF_CLEAR < sy) continue;
-              // Whatever stands right by the target (you can't be inside it) doesn't pull the camera in.
-              const dt = o.t === 'c' ? Math.hypot(st.tx - o.x, st.tz - o.z) - o.r : Math.max(Math.abs(st.tx - o.x) - o.w / 2, Math.abs(st.tz - o.z) - o.d / 2);
-              if (dt < 1.2) continue;
-              const d = o.t === 'c' ? Math.hypot(sx - o.x, sz - o.z) - o.r : Math.max(Math.abs(sx - o.x) - o.w / 2, Math.abs(sz - o.z) - o.d / 2);
-              if (d < 0.4) {
-                blocked = true;
-                break;
-              }
-            }
-          }
-          if (blocked) break;
-          lastOk = u;
+            return u >= 1;
+          };
+          let done = false;
+          for (const l of LIFTS) if (!done) done = tryIt(l, 0);
+          // Still shut (a column right behind you): swing round it.
+          if (!done && best < 0.6) for (const tn of TURNS) for (const l of [0, ...LIFTS.slice(0, 2)]) if (!done) done = tryIt(l, tn);
+          want = Math.max(MIN_REACH * 0.3, best);
         }
-        if (lastOk < 1) {
-          const u = Math.max(0.18, lastOk);
-          px = st.tx + (px - st.tx) * u;
-          pz = st.tz + (pz - st.tz) * u;
-          py = st.ty + (py - st.ty) * u + (1 - u) * 1.2;
+        // Worse is at once, better is slow: no flicker in a doorway.
+        const rec = 1 - Math.exp(-dt * 2.2);
+        st.reach = want < st.reach ? want : st.reach + (want - st.reach) * rec;
+        st.lift = lift > st.lift ? lift : st.lift + (lift - st.lift) * rec;
+        st.turn = Math.abs(turn) > Math.abs(st.turn) ? turn : st.turn + (turn - st.turn) * rec;
+        const pitch = Math.min(1.45, st.pitch + st.lift);
+        at(pitch, dist * st.reach, st.turn);
+        // The eased pose must be clear too (the slow recovery could swing it into something).
+        const u = rayClear(plaza, nav, st.tx, st.ty, st.tz, px, py, pz);
+        if (u < 1) {
+          st.reach = Math.max(0.1, st.reach * u);
+          at(pitch, dist * st.reach, st.turn);
         }
         py = Math.max(py, floorY(plaza, px, pz) + 0.7);
-      }
+      } else at(st.pitch, dist);
       if (st.shake > 0 && !reduced) {
         const s = st.shake * 0.12;
         px += (Math.random() - 0.5) * s;

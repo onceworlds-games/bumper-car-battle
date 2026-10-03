@@ -1,6 +1,9 @@
 // ?test: exposes the game's state for smoke tests (window.__cv), and ?test=auto drives the game through its own
 // public paths (Enter, Ready, walking, greeting, unmasking) the way a player would. Off unless asked for.
 import { stage as stageOf } from './sim/rules.js';
+import { audio } from './audio/engine.js';
+import { sfx, createAmbience } from './audio/sfx.js';
+import { createMusic } from './audio/music.js';
 
 export function installTestHook(g) {
   const params = new URLSearchParams(location.search);
@@ -53,6 +56,7 @@ export function installTestHook(g) {
     ready: () => g.room?.setReady(true),
     verbs: g.verbs,
     screens: g.screens,
+    audioKit: { audio, sfx, createAmbience, createMusic },
   };
   if (params.get('test') !== 'auto') return;
   // The autopilot: in, ready, then wander between troupes, greet, and unmask what's in reach now and then.

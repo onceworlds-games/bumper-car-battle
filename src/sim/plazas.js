@@ -87,7 +87,11 @@ const QUAY = {
   ],
   raised: [],
   ramps: [],
-  roofs: [{ x0: -17, x1: 15, z0: -18.3, z1: -14.5, h: 5.65 }],
+  roofs: [
+    { x0: -17, x1: 15, z0: -18.3, z1: -14.5, h: 5.65 },
+    // The bandstand's canopy on its eight posts.
+    { x0: -11.2, x1: -4.8, z0: -8.2, z1: -1.8, h: 5.5, lo: 3.3 },
+  ],
   obstacles: [
     { t: 'c', x: -6, z: 4, r: 0.9, occ: true, h: 14, kind: 'column' },
     { t: 'c', x: 6, z: 4, r: 0.9, occ: true, h: 14, kind: 'column' },

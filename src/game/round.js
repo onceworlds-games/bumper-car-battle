@@ -27,9 +27,11 @@ export function createRoundView() {
   let wasOut = false;
   let fwRid = '';
   let lastDust = 0;
+  const spec = { on: false, x: 0, z: 0, near: false };
   const view = {
     targets,
     answers,
+    spec,
     lastRid: '',
     /** Who is who this frame, for labels: [{ id, x, y, z }] */
     labels: [],
@@ -177,7 +179,7 @@ export function createRoundView() {
           acc -= FIXED;
           player.update(FIXED, {
             keys: ctx.input.held,
-            camYaw: stage.camera.st.yaw,
+            camYaw: stage.camera.heading(),
             plaza,
             slot,
             canLock: !decoyHolds && st !== 'over',
@@ -215,18 +217,42 @@ export function createRoundView() {
       }
       // Camera: you, or (watching) a slow turn round the plaza.
       const cam = stage.camera;
-      if (playing && !out) {
+      const closing = st === 'results' || st === 'over';
+      if (playing && !out && !closing) {
         cam.st.opera += ((player.st.opera ? 1 : 0) - cam.st.opera) * Math.min(1, ctx.dt * 6);
         cam.update(ctx.dt, mv.x, floorY(plaza, mv.x, mv.z), mv.z, plaza, { heading: mv.h, moving: player.st.steer && mv.speed > 0.5, now: ctx.now, reduced: ctx.reduced });
       } else {
         cam.st.opera = 0;
         const b = plaza.bounds;
-        const cx = (b.x0 + b.x1) / 2;
-        const cz = (b.z0 + b.z1) / 2;
+        let fx = (b.x0 + b.x1) / 2;
+        let fz = (b.z0 + b.z1) / 2;
+        // Watching: a slow turn round the plaza, drawn in toward whatever just happened (an unmask, a faux pas).
+        let near = false;
+        const evs = session.events;
+        for (let i = evs.length - 1; i >= 0; i--) {
+          const e = evs[i];
+          if ((e.k === 'unmask' || e.k === 'faux' || e.k === 'wrong') && t - e.t < 7 && t - e.t >= 0) {
+            fx = e.x;
+            fz = e.z;
+            near = true;
+            break;
+          }
+        }
+        if (!spec.on) {
+          spec.on = true;
+          spec.x = fx;
+          spec.z = fz;
+        }
+        const ease = 1 - Math.exp(-ctx.dt * 1.4);
+        spec.x += (fx - spec.x) * ease;
+        spec.z += (fz - spec.z) * ease;
+        spec.near = near;
         if (!ctx.manualOrbit) cam.st.yaw += ctx.dt * 0.05;
-        cam.st.pitch = Math.max(cam.st.pitch, 0.5);
-        cam.st.dist = Math.max(cam.st.dist, 16);
-        cam.update(ctx.dt, cx, 0, cz, plaza, { now: ctx.now });
+        // After the last result the camera lifts its eyes to the sky: the finale's fireworks over the plaza.
+        const finale = st === 'over';
+        cam.st.pitch += ((near ? 0.38 : finale ? 0.2 : 0.55) - cam.st.pitch) * ease;
+        cam.st.dist += ((near ? 10 : finale ? 21 : 17) - cam.st.dist) * ease;
+        cam.update(ctx.dt, spec.x, finale ? 5 : 0, spec.z, plaza, { now: ctx.now });
       }
       const ghost = playing && !out && !mv.locked && slot && st !== 'reveal' && st !== 'results' ? { tr: meM.tr, x: slot.x, z: slot.z, h: slot.h, alpha: Math.min(1, Math.hypot(slot.x - mv.x, slot.z - mv.z) / 1.2) } : null;
       view.frame = {

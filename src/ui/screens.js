@@ -128,6 +128,11 @@ export function createScreens(root) {
           const refresh = () => btns.forEach(([btn, id]) => btn.classList.toggle('on', chosen.includes(id)));
           refresh();
         }
+        if (a.tells) {
+          // What gives a person away, in four words, for the first few evenings.
+          const row = el('div', 'tells', card);
+          for (const w of ['Walks alone', 'Turns late', 'Sprints', 'Stiff waves']) el('span', '', row, w);
+        }
         const tm = el('div', 'timer', card);
         el('i', '', tm);
       });

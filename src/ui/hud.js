@@ -246,6 +246,7 @@ export function createHud(root, labelsRoot, { onCard, onChip, onHome }) {
         }
         if (e.textContent !== t.text) e.textContent = t.text;
         e.classList.toggle('me', !!t.me);
+        e.classList.toggle('call', !!t.call);
         e.style.left = `${t.x}px`;
         e.style.top = `${t.y}px`;
         e.style.display = '';

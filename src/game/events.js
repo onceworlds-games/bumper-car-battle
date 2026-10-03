@@ -38,6 +38,9 @@ export function createEvents({ stage, hud, session, player, view, progress }) {
   const faces = new Map();
   let prompt = null;
   const answeredG = new Set();
+  // Whom I waved at (greeting number -> masker): when they answer oddly the word appears over them and they're marked.
+  const myGreets = new Map();
+  const callouts = [];
 
   function faceTexture(id, r) {
     if (faces.has(id)) return faces.get(id);
@@ -80,6 +83,7 @@ export function createEvents({ stage, hud, session, player, view, progress }) {
 
   const ev = {
     attention,
+    callouts,
     get prompt() {
       return prompt;
     },
@@ -92,6 +96,8 @@ export function createEvents({ stage, hud, session, player, view, progress }) {
         attention.length = 0;
         prompt = null;
         answeredG.clear();
+        myGreets.clear();
+        callouts.length = 0;
         view.answers.clear();
       }
       const plaza = PLAZAS[r.plaza];
@@ -199,6 +205,7 @@ export function createEvents({ stage, hud, session, player, view, progress }) {
         }
         break;
       case 'greet': {
+        if (e.a === me && e.b) myGreets.set(e.q, e.b);
         // Heads turn to whoever waves out of turn; the greeted reveller waves back after its own beat.
         addAtt({ x: e.x, z: e.z, r: 4, tx: e.x, tz: e.z, t: e.t, dur: 1.5 });
         if (e.n >= 0) addAtt({ slot: e.n, em: EM.wave, t: e.t + e.reply + 0.3, dur: 1.4 });
@@ -213,6 +220,12 @@ export function createEvents({ stage, hud, session, player, view, progress }) {
       }
       case 'answer':
         if (e.a !== me) view.answers.set(e.a, { v: e.v, t: e.t });
+        if (e.a !== me && e.v !== 'ok' && myGreets.get(e.g) === e.a) {
+          // Your wave got an odd answer: say so over them, and mark them for your fan.
+          callouts.push({ id: e.a, text: e.v === 'eager' ? 'Eager' : 'Stiff', until: t + 2.6 });
+          player.st.mark = { k: 'p', id: e.a };
+          sfx.clue();
+        }
         break;
       case 'smoke':
         stage.fx.smoke(e.x, e.z, ABILITIES.smoke.radius);

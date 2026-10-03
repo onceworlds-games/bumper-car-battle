@@ -55,7 +55,7 @@ export function createMatchUI(d) {
     unmask(info, nowMs) {
       if (!info?.me) return;
       const why = blocked('unmask', { stage: info.st, rs: info.rs, t: info.t });
-      const tgt = player.pick(view.targets, UNMASK.range, stage.camera.st.yaw);
+      const tgt = player.pick(view.targets, UNMASK.range, stage.camera.heading());
       if (why) {
         hud.why(why);
         sfx.refuse();
@@ -83,7 +83,7 @@ export function createMatchUI(d) {
         sfx.refuse();
         return;
       }
-      const tgt = player.pick(view.targets, GREET.range, stage.camera.st.yaw);
+      const tgt = player.pick(view.targets, GREET.range, stage.camera.heading());
       if (!tgt) {
         hud.why('Nobody near');
         return;
@@ -114,7 +114,7 @@ export function createMatchUI(d) {
       let tz;
       if (id === 'lantern') {
         // Lob it ahead, where the camera looks.
-        const y = stage.camera.st.yaw;
+        const y = stage.camera.heading();
         tx = player.mv.x - Math.sin(y) * 6;
         tz = player.mv.z - Math.cos(y) * 6;
       }
@@ -175,7 +175,14 @@ export function createMatchUI(d) {
         else if (want === 'assign') card = openAssign(r, me);
         else if (want === 'powder') card = screens.powder({ seconds: rs.out - t });
         else if (want === 'results') card = openResults(r);
-        else if (want === 'final') card = openFinal(g);
+        else if (want === 'final') {
+          card = openFinal(g);
+          // The finale: one more show over the plaza, and a shower of confetti on the winner's colours.
+          const b = PLAZAS[r.plaza].bounds;
+          stage.fx.setFireworks(r.seed + 977, t, 30, { x: (b.x0 + b.x1) / 2, z: (b.z0 + b.z1) / 2 }, Math.min(b.x1 - b.x0, b.z1 - b.z0) * 0.45);
+          shells = [];
+          shellI = 0;
+        }
       }
       if (card?.tick) {
         if (want === 'powder') card.tick(rs.out - t);
@@ -215,11 +222,11 @@ export function createMatchUI(d) {
       // ---- the heartbeat: your pursuer close; in the Hush, everyone's ----
       if ((beatOn || st === 'hush') && playing && !out && ctx.now >= nextBeat) {
         nextBeat = ctx.now + (beatOn ? 0.85 : 1.25);
-        sfx.heartbeat(beatOn ? 0.55 : 0.3);
+        sfx.heartbeat(beatOn ? 0.38 : 0.22);
         if (beatOn && !ctx.reduced) hud.beat();
       }
       // ---- fireworks' booms, from the same seed as the show ----
-      if (st === 'hush' || st === 'reveal') {
+      if (st === 'hush' || st === 'reveal' || cardKind === 'final') {
         if (!shells.length) shells = stage.fx.shells?.() ?? [];
         while (shellI < shells.length && shells[shellI].t + 1.3 <= t) {
           const s = shells[shellI++];
@@ -230,7 +237,7 @@ export function createMatchUI(d) {
       rings.length = 0;
       const plaza = PLAZAS[r.plaza];
       if (playing && !out && (st === 'hunt' || st === 'hush' || st === 'blend')) {
-        const tgt = player.pick(view.targets, UNMASK.range, stage.camera.st.yaw);
+        const tgt = player.pick(view.targets, UNMASK.range, stage.camera.heading());
         rings.push({ x: player.mv.x, y: floorY(plaza, player.mv.x, player.mv.z), z: player.mv.z, r: 0.55, hex: 0xf1e3c8, a: 0.35 });
         if (tgt && st !== 'blend') rings.push({ x: tgt.x, y: floorY(plaza, tgt.x, tgt.z), z: tgt.z, r: 0.62, hex: 0xf2b544, a: 0.9 });
         const mk = player.st.mark ? view.targets.find((x) => x.ref.k === player.st.mark.k && (x.ref.k === 'n' ? x.ref.s === player.st.mark.s : x.ref.id === player.st.mark.id)) : null;
@@ -243,9 +250,23 @@ export function createMatchUI(d) {
       const tags = [];
       if (st === 'reveal' || st === 'results' || !playing) {
         const cam = stage.camera.cam;
+        const all = st === 'reveal' || st === 'results' || playing;
         for (const l of view.labels) {
+          // Watching, only those near what you're looking at (the plaza isn't a wall of names).
+          if (!all && Math.hypot(l.x - stage.camera.st.tx, l.z - stage.camera.st.tz) > 14) continue;
           const v = projected(cam, l.x, floorY(plaza, l.x, l.z) + 2.25, l.z, stage.R.size.w, stage.R.size.h);
           if (v) tags.push({ key: l.id, x: v[0], y: v[1], text: l.bot ? `${l.name} (bot)` : l.name, me: l.me });
+        }
+      }
+      // Words over those who answered your wave oddly.
+      if (playing && !out) {
+        const cam = stage.camera.cam;
+        for (const c of events.callouts) {
+          if (c.until < t) continue;
+          const l = view.labels.find((x) => x.id === c.id);
+          if (!l) continue;
+          const v = projected(cam, l.x, floorY(plaza, l.x, l.z) + 2.1, l.z, stage.R.size.w, stage.R.size.h);
+          if (v) tags.push({ key: `call:${c.id}`, x: v[0], y: v[1], text: c.text, call: true });
         }
       }
       hud.tags(tags);
@@ -261,7 +282,7 @@ export function createMatchUI(d) {
           const cam = stage.camera.cam;
           const dx = gh.x - cam.position.x;
           const dz = gh.z - cam.position.z;
-          const yaw = stage.camera.st.yaw;
+          const yaw = stage.camera.heading();
           const right = dx * Math.cos(yaw) - dz * Math.sin(yaw);
           const fwd = -(dx * Math.sin(yaw) + dz * Math.cos(yaw));
           const ang = Math.atan2(right, fwd);
@@ -348,6 +369,7 @@ export function createMatchUI(d) {
       picks: ABILITY_IDS.map((id) => ({ id, unlocked: own.includes(id) || r.chaos })),
       chosen: me.ab,
       chaos: r.chaos,
+      tells: progress.hint('tells', 3),
       onPick: (ab) => {
         sfx.ui();
         chooseLoadout(ab);
