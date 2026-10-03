@@ -1164,7 +1164,8 @@ body.touch .hint.top {
   top: calc(184px + var(--safe-t));
 }
 body.touch .banner {
-  top: 56%;
+  top: 64%;
+  font-size: clamp(36px, 12vh, 64px);
 }
 body.touch.narrow .bark {
   top: calc(226px + var(--safe-t));
@@ -1174,6 +1175,7 @@ body.touch.narrow .hint.top {
 }
 body.touch.narrow .banner {
   top: 46%;
+  font-size: clamp(44px, 10vw, 96px);
 }
 
 /* A phone held sideways: the assignment reads left to right instead of top to bottom. */
