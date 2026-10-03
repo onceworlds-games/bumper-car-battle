@@ -505,6 +505,11 @@ void main() { vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(vC * 
         extra.clock.hourHand.rotation.z = -((11 + u) / 12) * Math.PI * 2;
       }
     },
+    /** The low tier's water skips the ripples and most of the mirrored lanterns. */
+    setLevel(level) {
+      water.uniforms.uLow.value = level === 'low' ? 1 : 0;
+      water.uniforms.uLightN.value = level === 'low' ? Math.min(6, overWater.length) : Math.min(24, overWater.length);
+    },
     setSky(sky) {
       water.uniforms.uSky.value.copy(sky.uniforms.uHorizon.value).lerp(sky.uniforms.uZenith.value, 0.55);
       water.uniforms.uHorizon.value.copy(sky.uniforms.uHorizon.value);

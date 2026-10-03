@@ -128,6 +128,7 @@ export function createWater(scene, boxes, { open = false, lights = [] } = {}) {
     uCam: { value: new THREE.Vector3() },
     uLights: { value: Array.from({ length: 24 }, (_, i) => (lights[i] ? new THREE.Vector3(lights[i].x, lights[i].y, lights[i].z) : new THREE.Vector3(0, -99, 0))) },
     uLightN: { value: Math.min(24, lights.length) },
+    uLow: { value: 0 },
   };
   const mat = new THREE.ShaderMaterial({
     uniforms,
@@ -145,6 +146,7 @@ uniform float uNight;
 uniform vec3 uCam;
 uniform vec3 uLights[24];
 uniform int uLightN;
+uniform float uLow;
 float h21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
 float noise(vec2 p) {
   vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -157,7 +159,9 @@ void main() {
   vec2 p = vW.xz;
   float e = 0.07;
   float h0 = height(p);
-  vec3 N = normalize(vec3(-(height(p + vec2(e, 0.0)) - h0) * 1.5 / e * 0.18, 1.0, -(height(p + vec2(0.0, e)) - h0) * 1.5 / e * 0.18));
+  // (The low tier keeps the colour and the glitter's band, and skips the rippled surface.)
+  vec3 N = vec3(0.0, 1.0, 0.0);
+  if (uLow < 0.5) N = normalize(vec3(-(height(p + vec2(e, 0.0)) - h0) * 1.5 / e * 0.18, 1.0, -(height(p + vec2(0.0, e)) - h0) * 1.5 / e * 0.18));
   vec3 V = normalize(uCam - vW);
   vec3 R = reflect(-V, N);
   float ndv = clamp(dot(N, V), 0.0, 1.0);
@@ -170,7 +174,7 @@ void main() {
   col = mix(col, sky, clamp(fres * 0.8 + 0.04, 0.0, 1.0));
   float s = max(dot(R, uSunDir), 0.0);
   float glitter = pow(s, 160.0) * 2.2 + pow(s, 14.0) * 0.16;
-  float sparkle = smoothstep(0.72, 0.98, noise(p * 9.0 + vec2(uTime * 1.1, -uTime * 0.7)));
+  float sparkle = uLow > 0.5 ? h0 : smoothstep(0.72, 0.98, noise(p * 9.0 + vec2(uTime * 1.1, -uTime * 0.7)));
   col += uSunCol * (glitter * (0.4 + 1.6 * sparkle)) * (1.0 - uNight * 0.8);
   // The lanterns, mirrored: warm smears along the ripples, longer the lower the eye.
   vec3 warm = vec3(1.0, 0.68, 0.34);

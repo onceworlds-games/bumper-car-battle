@@ -35,6 +35,7 @@ export function createStage(canvas) {
       built?.dispose();
       plaza = p;
       built = buildPlaza(scene, p);
+      built.setLevel(R.level);
       fx.clear();
       stage.compile();
     },
@@ -62,6 +63,7 @@ export function createStage(canvas) {
   const tier = (level) => {
     fx.setLevel(level);
     figures.setTier(level);
+    built?.setLevel(level);
     const on = level !== 'low';
     const px = level === 'high' ? 2048 : 1024;
     sky.sun.castShadow = on;
