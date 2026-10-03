@@ -33,6 +33,21 @@ export function installTestHook(g) {
         quality: g.stage.R.level,
       };
     },
+    /** Draws n frames back to back, waiting for the GPU each time: milliseconds per frame (for the tiers' costs). */
+    bench(n = 120) {
+      const gl = g.stage.R.renderer.getContext();
+      const px = new Uint8Array(4);
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const t0 = performance.now();
+        g.stage.render(performance.now() / 1000 + i / 60, 0.4, 0.4);
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); // a read waits for the GPU to finish the frame
+        out.push(performance.now() - t0);
+      }
+      out.sort((a, b) => a - b);
+      const info = g.stage.R.renderer.info;
+      return { avg: out.reduce((a, b) => a + b, 0) / n, p50: out[n >> 1], p95: out[Math.floor(n * 0.95)], calls: info.render.calls, tris: info.render.triangles, level: g.stage.R.level, size: [g.stage.R.size.w, g.stage.R.size.h, g.stage.R.size.pr] };
+    },
     enter: () => g.enter(),
     skipRehearsal: () => g.rehearsal.active && g.stopRehearsal(true),
     ready: () => g.room?.setReady(true),

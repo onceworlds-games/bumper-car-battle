@@ -584,14 +584,15 @@ body {
 }
 .picks {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: 8px;
   margin: 12px 0 6px;
 }
 .pick {
   pointer-events: auto;
-  width: 70px;
+  flex: 0 1 70px;
+  min-width: 52px;
   min-height: 70px;
   border-radius: 8px;
   border: 1.5px solid rgba(242, 181, 68, 0.4);
@@ -1012,7 +1013,7 @@ body.touch .btn kbd {
     margin: 6px 0 2px;
   }
   .pick {
-    width: 60px;
+    flex-basis: 60px;
     min-height: 56px;
   }
   .mirror {

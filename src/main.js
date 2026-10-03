@@ -43,7 +43,20 @@ async function boot() {
   const canvas = document.getElementById('scene');
   const uiRoot = document.getElementById('ui');
   const labels = document.getElementById('labels');
-  const stage = createStage(canvas);
+  let stage;
+  try {
+    stage = createStage(canvas);
+  } catch (e) {
+    // No WebGL here: the dusk and the name stay, with one plain line under them.
+    console.warn('[carnevale] renderer', e?.message ?? e);
+    if (bootCover) {
+      const p = document.createElement('p');
+      p.textContent = "This browser can't draw the ball";
+      p.style.cssText = "margin:0;font:700 18px/1.2 'Jost','Avenir Next','Segoe UI',system-ui,sans-serif;color:#f1e3c8;letter-spacing:0.04em";
+      bootCover.appendChild(p);
+    }
+    return;
+  }
   const input = createInput(canvas);
   const progress = createProgress();
   const music = createMusic();
@@ -82,10 +95,10 @@ async function boot() {
   // The attract plaza (title and lobby): a crowd at golden hour, the camera drifting round.
   const attract = { plaza: PLAZAS[0], crowd: null };
 
-  function makeMatch(sess) {
+  function makeMatch(sess, rehearsing = false) {
     const view = createRoundView();
     const events = createEvents({ stage, hud, session: sess, player, view, progress });
-    const ui = createMatchUI({ stage, hud, screens, map, session: sess, player, view, events, progress, music });
+    const ui = createMatchUI({ stage, hud, screens, map, session: sess, player, view, events, progress, music, rehearsal: rehearsing });
     ui.view = view;
     return ui;
   }
@@ -196,7 +209,7 @@ async function boot() {
     phase = 'rehearsal';
     safe(() => room?.hideLobby(true));
     const sess = rehearsal.start();
-    rehearsalUI = makeMatch(sess);
+    rehearsalUI = makeMatch(sess, true);
     hud.bark(rehearsal.first().say, 3600);
     if (rehearsal.first().hint) hud.hint(rehearsal.first().hint, 4000);
     music.set('blend');

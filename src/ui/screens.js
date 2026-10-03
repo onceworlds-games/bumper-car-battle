@@ -111,7 +111,7 @@ export function createScreens(root) {
             const btn = el('button', 'pick live', row);
             btn.type = 'button';
             btn.appendChild(glyph(p.id, 30));
-            el('span', '', btn, ABILITIES[p.id].short);
+            el('span', '', btn, p.unlocked || a.chaos ? ABILITIES[p.id].short : `Lv ${ABILITIES[p.id].unlock}`);
             btn.disabled = a.chaos || !p.unlocked;
             if (!p.unlocked) btn.title = `Level ${ABILITIES[p.id].unlock}`;
             btn.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -139,20 +139,32 @@ export function createScreens(root) {
       };
     },
     powder({ seconds }) {
+      let draw = null;
       const o = open('powder', (ov) => {
         const card = el('div', 'card stock powder', ov);
         el('div', 'caps', card, 'Unmasked');
         el('h2', '', card, 'The Powder Room');
         const [c, g] = makeCanvas(150, 'mirror', 190);
-        mirror(g, 150, 190);
+        // The mirror keeps the time: the seconds until you are back, in its glass.
+        draw = (sec) => {
+          mirror(g, 150, 190);
+          g.fillStyle = '#f1e3c8';
+          g.textAlign = 'center';
+          g.textBaseline = 'middle';
+          g.font = 'italic 700 92px "Bodoni Moda", Georgia, serif';
+          g.fillText(String(Math.max(0, Math.ceil(sec))), 75, 100);
+        };
+        draw(seconds);
         card.appendChild(c);
-        el('div', 'sub', card, 'A fresh face, a new costume');
-        el('div', 'caps next', card);
       });
-      const left = o.querySelector('.caps.next');
+      let shown = Math.ceil(seconds);
       return {
         tick(sec) {
-          if (left) left.textContent = `Back in ${Math.max(0, Math.ceil(sec))}`;
+          const n = Math.max(0, Math.ceil(sec));
+          if (n !== shown && draw) {
+            shown = n;
+            draw(sec);
+          }
         },
       };
     },
@@ -189,7 +201,7 @@ export function createScreens(root) {
       const o = open('final', (ov) => {
         const card = el('div', 'card stock final', ov);
         const head = el('div', 'head', card);
-        el('h2', '', head, top[0] ? top[0].name : 'Midnight');
+        el('h2', '', head, top[0] ? `${top[0].name} wins` : 'Midnight');
         const pod = el('div', 'podium', head);
         const order = [top[1], top[0], top[2]];
         order.forEach((p, i) => {
@@ -207,8 +219,10 @@ export function createScreens(root) {
           if (p.bot) fallback();
           else Promise.resolve(avatarUrl(p.id)).then((u) => (u ? (img.src = u) : fallback())).catch(fallback);
           named(col, 'nm', p.name, p.banner);
-          const st = el('div', 'step', col, String([2, 1, 3][i]));
-          st.style.height = `${[46, 64, 34][i]}px`;
+          // Shared places share a step.
+          const place = p.place ?? [2, 1, 3][i];
+          const st = el('div', 'step', col, String(place));
+          st.style.height = `${place === 1 ? 64 : place === 2 ? 46 : 34}px`;
         });
         if (awards.length) {
           const aw = el('div', 'awards', head);

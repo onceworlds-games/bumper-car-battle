@@ -34,7 +34,9 @@ void main() {
 export function createPost(renderer, scene, camera) {
   const size = renderer.getSize(new THREE.Vector2());
   const pr = renderer.getPixelRatio();
-  const target = new THREE.WebGLRenderTarget(size.x * pr, size.y * pr, { type: THREE.HalfFloatType, samples: 4 });
+  // Multisampling the half-float target is for screens with a mouse; a phone's pixels are dense enough without it.
+  const coarse = !!window.matchMedia?.('(pointer: coarse)').matches;
+  const target = new THREE.WebGLRenderTarget(size.x * pr, size.y * pr, { type: THREE.HalfFloatType, samples: coarse ? 0 : 4 });
   const composer = new EffectComposer(renderer, target);
   composer.setPixelRatio(pr);
   composer.setSize(size.x, size.y);

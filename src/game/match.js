@@ -20,7 +20,7 @@ const fmt = (s) => {
 };
 
 export function createMatchUI(d) {
-  const { stage, hud, screens, map, session, player, view, events, progress, music } = d;
+  const { stage, hud, screens, map, session, player, view, events, progress, music, rehearsal = false } = d;
   let lastStage = '';
   let lastRid = '';
   let card = null;
@@ -306,7 +306,7 @@ export function createMatchUI(d) {
   function quarryInfo(r, t, info) {
     const plaza = PLAZAS[r.plaza];
     const timing = r.timing;
-    const clock = info.st === 'hush' ? 'Midnight' : info.st === 'assign' || info.st === 'blend' ? fmt(timing.huntStart - t) : fmt(timing.hushStart - t);
+    const clock = rehearsal ? '' : info.st === 'hush' ? 'Midnight' : info.st === 'assign' || info.st === 'blend' ? fmt(timing.huntStart - t) : fmt(timing.hushStart - t);
     if (r.mode === 'spot' && r.case) {
       const c = latestCase(r);
       return { caseFile: r.case.imps.map((id) => ({ tr: r.case.clues[id]?.tr ?? r.m[id]?.tr ?? 0, found: r.case.found.includes(id) })), where: c && c.d >= 0 ? `by ${plaza.districts[c.d].name}` : `${r.case.imps.length - r.case.found.length} at large`, clock };

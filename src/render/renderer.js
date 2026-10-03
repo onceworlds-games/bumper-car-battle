@@ -12,7 +12,15 @@ export function createRenderer(canvas) {
     const s = settings();
     return s && LEVELS.includes(s.choice) ? s.choice : 'auto';
   };
-  let level = choice() === 'auto' ? 'high' : choice();
+  // A phone starts a step down and earns the high tier by running smoothly; a laptop starts at the top.
+  const coarse = (() => {
+    try {
+      return !!window.matchMedia?.('(pointer: coarse)').matches;
+    } catch {
+      return false;
+    }
+  })();
+  let level = choice() === 'auto' ? (coarse ? 'medium' : 'high') : choice();
   // ?quality= is for trying the tiers by hand (and for the store art).
   const forced = new URLSearchParams(location.search).get('quality');
   if (LEVELS.includes(forced)) level = forced;
