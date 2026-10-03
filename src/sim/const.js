@@ -106,7 +106,9 @@ export const SPOT = {
   alertS: 15,
 };
 
-export const IDLE = { flusterAfter: 0, audienceAfter: 15 }; // seconds after the platform marks a player idle
+// Seconds after the platform marks a player idle (30 s without a touch): out of step they shimmer at once and leave the
+// round after audienceAfter; in step (what the game asks of you in a hush, or when you are waiting) they get a minute.
+export const IDLE = { audienceAfter: 15, audienceStill: 60 };
 
 export const FILL_TO = 8; // bots fill Masquerade to this many maskers
 export const MIN_MASKERS = 3;

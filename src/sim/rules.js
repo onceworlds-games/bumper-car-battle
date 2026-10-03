@@ -3,7 +3,7 @@
 // (each masker's poise and timers), `fx` (smoke, decoys, lanterns, swaps), `sc` (scores) and `ev` (recent events);
 // `chain` (who hunts whom) and `intel` (each hunter's clue) are secrets the host keeps in private values.
 import { hash32, rng, unit } from './rng.js';
-import { POISE, UNMASK, GREET, SEEN, ABILITIES, ABILITY_IDS, SCORE, CLUE, SPOT, TROUPES, FILL_TO, MIN_MASKERS, LIMITS, roundTiming, phaseAt } from './const.js';
+import { POISE, UNMASK, GREET, SEEN, ABILITIES, ABILITY_IDS, SCORE, CLUE, SPOT, IDLE, TROUPES, FILL_TO, MIN_MASKERS, LIMITS, roundTiming, phaseAt } from './const.js';
 import { PLAZAS, districtAt } from './plazas.js';
 import { lineOfSight, walkPath, navFor } from './nav.js';
 import { STRIDE } from './crowd.js';
@@ -606,13 +606,15 @@ export function tick(S, t, dt, view) {
       push(S, t, { k: 'fluster', a: id });
     }
     // Idle players shimmer, then become audience and leave the chain.
+    // Standing still in your place is what the game asks for in a hush: it isn't idleness until a minute is up.
     const idle = view.idle ? view.idle(id) : 0;
-    if (idle > 0 && !m.b) {
-      if (st.fl < t + 1) {
+    if (idle > 0 && !m.b && st0 !== 'hush' && st0 !== 'reveal') {
+      const still = (flags & FLAG.locked) !== 0;
+      if (!still && st.fl < t + 1) {
         st.fl = t + 2;
         S.dirty.rs = true;
       }
-      if (idle >= 15) toAudience(S, t, id);
+      if (idle >= (still ? IDLE.audienceStill : IDLE.audienceAfter)) toAudience(S, t, id);
     }
     // The hunt streak: time out of step without getting flustered.
     const sc = S.sc[id];

@@ -163,11 +163,15 @@ test('leaving repairs the chain: the pursuer inherits the quarry', () => {
   assert.ok(!S.chain.includes(b));
 });
 
-test('idle players shimmer, then become audience after fifteen seconds', () => {
+test('idle players out of step shimmer, then become audience; in step they get a minute, and the Hush is no idleness', () => {
   const W = createWorld(cfg({ bots: false, humans: humans(4) }));
   const S = W.S;
   const id = 'p0';
   while (W.t < 40) W.step(STEP);
+  // Out of step and untouched: shimmering at once, gone after fifteen seconds.
+  const sp = { x: 0, z: 0, h: 0, sp: 0 };
+  W.slotPos(id, sp);
+  W.place(id, sp.x + 6, sp.z, 0, 0);
   W.idle.set(id, 5);
   W.step(STEP);
   assert.ok(S.rs[id].fl > W.t, 'shimmering while idle');
@@ -175,6 +179,26 @@ test('idle players shimmer, then become audience after fifteen seconds', () => {
   W.step(STEP);
   assert.equal(S.rs[id].aud, 1);
   assert.ok(!S.chain.includes(id));
+  // In step, still: nothing at fifteen seconds, audience at a minute.
+  const q = 'p1';
+  W.place(q, sp.x, sp.z, 0, rules.FLAG.locked);
+  W.slotPos(q, sp);
+  W.place(q, sp.x, sp.z, sp.h, rules.FLAG.locked);
+  W.idle.set(q, 20);
+  W.step(STEP);
+  assert.ok(!(S.rs[q].fl > W.t) && !S.rs[q].aud, 'a still figure in its place is not shimmering or removed');
+  W.idle.set(q, 61);
+  W.step(STEP);
+  assert.equal(S.rs[q].aud, 1);
+});
+
+test('the Hush never counts as idleness', () => {
+  const W = createWorld(cfg({ bots: false, humans: humans(4) }));
+  const S = W.S;
+  while (W.t < S.timing.hushStart + 2) W.step(STEP);
+  W.idle.set('p2', 200);
+  W.step(STEP);
+  assert.ok(!S.rs.p2.aud && !(S.rs.p2.fl > W.t));
 });
 
 test('the last two maskers get a clue every fifteen seconds', () => {
