@@ -60,8 +60,8 @@ export function createCamera() {
   const cam = new THREE.PerspectiveCamera(52, 1, 0.1, 900);
   const st = {
     yaw: 0.6,
-    pitch: 0.52,
-    dist: 10.5,
+    pitch: 0.46,
+    dist: 10,
     tx: 0,
     ty: 1.4,
     tz: 0,
@@ -72,6 +72,8 @@ export function createCamera() {
     reach: 1,
     lift: 0,
     turn: 0,
+    // What you chose with the wheel and the drag: the title's drifting view and the spectators' don't overwrite it.
+    mine: { pitch: 0.46, dist: 10 },
   };
   const out = new THREE.Vector3();
   const api = {
@@ -98,9 +100,11 @@ export function createCamera() {
       st.yaw += dyaw;
       st.pitch = Math.max(0.12, Math.min(1.25, st.pitch + dpitch));
       st.manualAt = now;
+      st.mine.pitch = st.pitch;
     },
     zoom(f) {
       st.dist = Math.max(MIN_D, Math.min(MAX_D, st.dist * f));
+      st.mine.dist = st.dist;
     },
     /** Puts the camera behind a heading straight away (a new round, back from the Powder Room). */
     snap(x, y, z, heading) {
@@ -110,6 +114,8 @@ export function createCamera() {
       st.reach = 1;
       st.lift = 0;
       st.turn = 0;
+      st.pitch = st.mine.pitch;
+      st.dist = st.mine.dist;
       if (heading !== undefined) st.yaw = heading + Math.PI;
     },
     /**

@@ -56,6 +56,8 @@ export function installTestHook(g) {
     ready: () => g.room?.setReady(true),
     verbs: g.verbs,
     screens: g.screens,
+    stage: g.stage,
+    player: g.player,
     audioKit: { audio, sfx, createAmbience, createMusic },
   };
   if (params.get('test') !== 'auto') return;
