@@ -21,7 +21,6 @@
     { "keys": ["Wheel"], "action": "Zoom" },
     { "keys": ["Esc"], "action": "Close the map" }
   ],
-  "help": "You are one mask among dozens. Stand in your place in your troupe to stay hidden and recover poise; leave it to hunt. Your card shows your quarry's costume, and clues name their district. Find the figure that moves like a person and unmask them before your pursuer finds you. Unmask an ordinary reveller and your own mask slips. At midnight everyone freezes.",
   "badges": [
     { "id": "first-unmask", "name": "First Unmask", "description": "Unmask your quarry.", "icon": "store/badges/first-unmask.png" },
     { "id": "faux-pas", "name": "Faux Pas", "description": "Unmask a reveller who was only a reveller.", "icon": "store/badges/faux-pas.png" },
