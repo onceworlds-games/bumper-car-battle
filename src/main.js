@@ -2,7 +2,7 @@
 // lobby hidden) -> the Rehearsal on your first evening -> the platform's lobby card over a living plaza -> the match
 // (or watching it) -> back to the lobby. Poster mode (?poster=) draws store art with no platform at all.
 import './ui/style.css';
-import { ow, safe, JOIN, onPlatform, controls, touchMode, reducedMotion, onPlatformEvent } from './platform.js';
+import { ow, safe, JOIN, onPlatform, controls, touchMode, reducedMotion, onSettings, onPlatformEvent } from './platform.js';
 import { createStage } from './render/stage.js';
 import { createInput } from './game/input.js';
 import { createPlayer } from './game/player.js';
@@ -61,7 +61,8 @@ async function boot() {
       sfx.ui();
     },
   });
-  if (reducedMotion()) document.body.classList.add('reduced');
+  document.body.classList.toggle('reduced', reducedMotion());
+  onSettings(() => document.body.classList.toggle('reduced', reducedMotion()));
 
   let room = null;
   let session = null;
