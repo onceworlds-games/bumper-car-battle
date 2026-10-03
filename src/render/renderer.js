@@ -58,8 +58,18 @@ export function createRenderer(canvas) {
     post?.setSize(w, h, pr);
     api.onResize?.(w, h);
   };
-  window.addEventListener('resize', resize);
-  window.visualViewport?.addEventListener?.('resize', resize);
+  // A window dragged to a new size sends a resize per mouse move: one resize per frame is plenty.
+  let resizing = false;
+  const soon = () => {
+    if (resizing) return;
+    resizing = true;
+    requestAnimationFrame(() => {
+      resizing = false;
+      resize();
+    });
+  };
+  window.addEventListener('resize', soon);
+  window.visualViewport?.addEventListener?.('resize', soon);
   /** Shadows follow the tier; the stage tells the materials so they recompile once. */
   const shadows = () => {
     renderer.shadowMap.enabled = level !== 'low';
