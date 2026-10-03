@@ -57,11 +57,11 @@ export function createPost(renderer, scene, camera) {
       composer.setSize(w, h);
     },
     /** night 0..1 (more bloom and toning after dark), reduced: no moving grain. */
-    draw(time, night, reduced) {
+    draw(time, night, reduced, grain = 1) {
       bloom.strength = 0.24 + night * 0.3;
       grade.uniforms.uTime.value = reduced ? 0 : time;
       grade.uniforms.uNight.value = night;
-      grade.uniforms.uGrain.value = reduced ? 0.35 : 1;
+      grade.uniforms.uGrain.value = reduced ? 0.35 : grain;
       composer.render();
     },
     dispose() {

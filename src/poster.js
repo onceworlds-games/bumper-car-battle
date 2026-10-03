@@ -41,6 +41,7 @@ export function runPoster(kind) {
   const canvas = document.getElementById('scene');
   const stage = createStage(canvas);
   window.__stage = stage;
+  stage.R.grain = 0.3; // a clean picture for the store
   const plaza = PLAZAS[sc.plaza];
   stage.setPlaza(plaza);
   const crowd = createCrowd(plaza, sc.seed, sc.n);

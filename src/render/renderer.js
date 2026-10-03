@@ -100,6 +100,7 @@ export function createRenderer(canvas) {
   const api = {
     renderer,
     size,
+    grain: 1, // the film grain's strength (the store art asks for less)
     get level() {
       return level;
     },
@@ -112,7 +113,7 @@ export function createRenderer(canvas) {
       if (level === 'high' && !postBroken) {
         try {
           if (!post) post = createPost(renderer, scene, camera);
-          post.draw(time, night, reduced);
+          post.draw(time, night, reduced, api.grain);
           return;
         } catch (e) {
           // No half-float targets here: the plain picture will do.
