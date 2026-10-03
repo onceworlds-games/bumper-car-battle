@@ -5,7 +5,7 @@ import { createWorld, STEP } from '../src/sim/world.js';
 import { createBot, STYLES } from '../src/sim/bots.js';
 import { standings } from '../src/sim/rules.js';
 
-const N = Math.max(4, Number(process.argv[2]) || 24);
+const N = Math.max(4, Number(process.argv[2]) || 30);
 const pct = (x) => `${Math.round(x * 100)}%`;
 const mean = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0);
 const median = (a) => {

@@ -174,7 +174,7 @@ export function createScreens(root) {
       };
     },
     /** Round results: rows [{ id, name, bot, tr, pts, unm, faux, me, place }] */
-    results({ title, sub, rows, next, nextLabel }) {
+    results({ title, sub, rows, next, nextLabel, cases }) {
       const o = open('results', (ov) => {
         const card = el('div', 'card stock results', ov);
         const head = el('div', 'head', card);
@@ -190,6 +190,17 @@ export function createScreens(root) {
           if (r.bot) el('span', 'bot', n, ' (bot)');
           el('td', '', tr, r.unm ? `${r.unm} unmasked` : '');
           el('td', '', tr, String(r.pts));
+        }
+        if (cases?.length) {
+          // Spot the Mask: who was found and who got away.
+          const c = el('div', 'cases', card);
+          el('div', 'caps', c, 'The impostors');
+          const strip = el('div', 'strip', c);
+          for (const k of cases) {
+            const d = el('div', k.found ? 'found' : '', strip);
+            d.appendChild(bust(k.tr, 44));
+            el('span', '', d, k.found ? 'Found' : 'Got away');
+          }
         }
         const xp = el('div', 'xp', card);
         xp.style.display = 'none';

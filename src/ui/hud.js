@@ -19,6 +19,13 @@ export function createHud(root, labelsRoot, { onCard, onChip, onHome }) {
   const q = el('div', 'card-q panel live', wrap);
   q.setAttribute('role', 'button');
   q.setAttribute('aria-label', 'Map');
+  q.tabIndex = 0;
+  q.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.stopPropagation();
+      onCard?.();
+    }
+  });
   q.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
     onCard?.();

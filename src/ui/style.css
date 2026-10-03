@@ -108,6 +108,9 @@ body {
   outline: 3px solid var(--cream);
   outline-offset: 3px;
 }
+.btn.ghost:hover {
+  background: rgba(242, 181, 68, 0.14);
+}
 .btn.ghost {
   background: transparent;
   color: var(--gold);
@@ -129,6 +132,27 @@ body {
   border-radius: 4px;
   vertical-align: 2px;
   opacity: 0.85;
+}
+
+/* Pressed and focused states for everything else you can touch. */
+.pick:hover:not(:disabled),
+.chip:hover {
+  border-color: var(--gold);
+}
+.pick:active:not(:disabled),
+.chip:active {
+  transform: scale(0.95);
+}
+.pick,
+.chip {
+  transition: transform 0.1s ease, border-color 0.15s;
+}
+.pick:focus-visible,
+.chip:focus-visible,
+.home:focus-visible,
+.card-q:focus-visible {
+  outline: 3px solid var(--cream);
+  outline-offset: 3px;
 }
 
 /* ---------- the panel: a theatre programme ---------- */
@@ -690,10 +714,31 @@ body {
   transform: rotate(45deg);
   opacity: 0.7;
 }
-@media (min-width: 560px) {
-  .tells {
-    grid-template-columns: repeat(4, auto);
-  }
+.cases {
+  margin: 12px 0 0;
+  text-align: center;
+}
+.cases .strip {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+.cases .strip > div {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  font: 700 11px/1 var(--ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--print-red);
+}
+.cases .strip > div:not(.found) canvas {
+  filter: grayscale(0.9);
+  opacity: 0.75;
+}
+.cases .strip > div.found {
+  color: var(--print);
 }
 .timer {
   height: 4px;

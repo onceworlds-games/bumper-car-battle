@@ -390,23 +390,29 @@ export function createMatchUI(d) {
 
   function openResults(r) {
     const sc = session.scores;
-    const rows = standings(sc, Object.keys(r.m)).map((row) => ({ ...row, name: r.m[row.id].nm, bot: !!r.m[row.id].b, tr: r.m[row.id].tr, unm: sc[row.id]?.unm ?? 0, me: row.id === session.me, banner: bannerOf(row.id, !!r.m[row.id].b) }));
+    const spot = r.mode === 'spot';
+    // In Spot the Mask the impostors are the case, not the contestants: only the hunters are ranked.
+    const ids = Object.keys(r.m).filter((id) => !spot || !r.m[id].b);
+    const rows = standings(sc, ids).map((row) => ({ ...row, name: r.m[row.id].nm, bot: !!r.m[row.id].b, tr: r.m[row.id].tr, unm: sc[row.id]?.unm ?? 0, me: row.id === session.me, banner: bannerOf(row.id, !!r.m[row.id].b) }));
     const g = session.game;
     const last = g && g.n >= g.rounds;
     const solved = r.case?.solved;
-    return screens.results({ title: r.mode === 'spot' ? (solved ? 'Case closed' : 'They slipped away') : rows[0] ? `${rows[0].name} leads` : 'Midnight', sub: `Round ${r.n}`, rows, nextLabel: last ? 'The podium' : 'Next round' });
+    const cases = spot && r.case ? r.case.imps.map((id) => ({ tr: r.m[id]?.tr ?? 0, found: r.case.found.includes(id) })) : null;
+    return screens.results({ title: spot ? (solved ? 'Case closed' : 'They slipped away') : rows[0] ? `${rows[0].name} leads` : 'Midnight', sub: `Round ${r.n}`, rows, cases, nextLabel: last ? 'The podium' : 'Next round' });
   }
 
   function openFinal(g) {
-    const rows = standings(g.tot, Object.keys(g.tot)).map((row) => ({ ...row, name: g.tot[row.id].nm, bot: !!g.tot[row.id].b, tr: 0, me: row.id === session.me, banner: bannerOf(row.id, !!g.tot[row.id].b) }));
+    const spot = g.mode === 'spot';
+    // (In Spot the Mask the bot impostors are the case, not contestants.)
+    const tot = spot ? Object.fromEntries(Object.entries(g.tot).filter(([, t]) => !t.b)) : g.tot;
+    const rows = standings(tot, Object.keys(tot)).map((row) => ({ ...row, name: tot[row.id].nm, bot: !!tot[row.id].b, tr: 0, me: row.id === session.me, banner: bannerOf(row.id, !!tot[row.id].b) }));
     const r = session.round;
     for (const row of rows) row.tr = r?.m[row.id]?.tr ?? 0;
-    const aw = awardsOf(g.tot);
-    const names = (id) => (id ? g.tot[id]?.nm + (g.tot[id]?.b ? ' (bot)' : '') : null);
+    const aw = awardsOf(tot);
+    const names = (id) => (id ? tot[id]?.nm + (tot[id]?.b ? ' (bot)' : '') : null);
     const list = [
       ['Hawkeye', names(aw.hawkeye)],
-      ['Master of Disguise', names(aw.disguise)],
-      ['Ghost', names(aw.ghost)],
+      ...(spot ? [] : [['Master of Disguise', names(aw.disguise)], ['Ghost', names(aw.ghost)]]),
       ['Slapstick', names(aw.slapstick)],
     ]
       .filter(([, n]) => n)
