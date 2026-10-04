@@ -24,6 +24,8 @@ const PIAZZA = {
     { x0: -4, x1: 14, z0: -21.3, z1: -17.5, h: 5.65 },
     { x0: -4, x1: 14, z0: 17.5, z1: 21.3, h: 5.65 },
   ],
+  // Walls the rules don't see (nobody walks there) that the camera keeps out of and off you: the stage's backdrop (drawn from this).
+  walls: [{ kind: 'backdrop', x0: -30.05, x1: -29.75, z0: -6.3, z1: 6.3, y0: 1.2, y1: 6.7 }],
   obstacles: [
     { t: 'c', x: -6, z: 0, r: 3.1, occ: false, h: 0.9, kind: 'fountain' },
     { t: 'c', x: -6, z: 0, r: 0.8, occ: true, h: 4.2, kind: 'statue' },
@@ -73,6 +75,8 @@ const QUAY = {
   id: 'quay',
   name: 'The Quay',
   bounds: { x0: -36, x1: 36, z0: -18, z1: 20 },
+  // The sides of the bounds with no houses behind them (the lagoon): the camera may swing out over the water there.
+  open: ['z1'],
   water: [
     { x: 0, z: 14.5, w: 74, d: 13 },
     { x: -20, z: -5, w: 4, d: 30 },
@@ -96,7 +100,8 @@ const QUAY = {
     { t: 'c', x: -6, z: 4, r: 0.9, occ: true, h: 14, kind: 'column' },
     { t: 'c', x: 6, z: 4, r: 0.9, occ: true, h: 14, kind: 'column' },
     ...pillars([-15, -11.5, -8, -4.5, -1, 2.5, 6, 9.5, 13], -14.5, 0.45),
-    { t: 'c', x: -8, z: -5, r: 2.6, occ: false, h: 4.2, kind: 'bandstand' },
+    // (camH: the height the camera keeps out of, where it isn't h: an open pavilion's platform, its canopy is in `roofs`)
+    { t: 'c', x: -8, z: -5, r: 2.6, occ: false, h: 4.2, camH: 0.6, kind: 'bandstand' },
     { t: 'c', x: 9, z: -5, r: 1.4, occ: false, h: 1.2, kind: 'well' },
     { t: 'b', x: -33.5, z: -11, w: 4, d: 3, occ: true, h: 2.6, kind: 'stall' },
     { t: 'b', x: -33.5, z: -3, w: 4, d: 3, occ: true, h: 2.6, kind: 'stall' },
@@ -157,12 +162,12 @@ const PALAZZO = {
     { t: 'b', x: -10, z: -12, w: 12, d: 0.4, occ: false, h: 1, kind: 'rail' },
     { t: 'b', x: 10, z: -12, w: 12, d: 0.4, occ: false, h: 1, kind: 'rail' },
     { t: 'b', x: 21, z: -12, w: 2, d: 0.4, occ: false, h: 1, kind: 'rail' },
-    { t: 'b', x: -4.2, z: -9, w: 0.4, d: 6, occ: false, h: 1, kind: 'stairwall' },
-    { t: 'b', x: 4.2, z: -9, w: 0.4, d: 6, occ: false, h: 1, kind: 'stairwall' },
-    { t: 'b', x: -20.2, z: -10, w: 0.4, d: 4, occ: false, h: 1, kind: 'stairwall' },
-    { t: 'b', x: -15.8, z: -10, w: 0.4, d: 4, occ: false, h: 1, kind: 'stairwall' },
-    { t: 'b', x: 15.8, z: -10, w: 0.4, d: 4, occ: false, h: 1, kind: 'stairwall' },
-    { t: 'b', x: 20.2, z: -10, w: 0.4, d: 4, occ: false, h: 1, kind: 'stairwall' },
+    { t: 'b', x: -4.2, z: -9, w: 0.4, d: 6, occ: false, h: 2.6, kind: 'stairwall' },
+    { t: 'b', x: 4.2, z: -9, w: 0.4, d: 6, occ: false, h: 2.6, kind: 'stairwall' },
+    { t: 'b', x: -20.2, z: -10, w: 0.4, d: 4, occ: false, h: 2.6, kind: 'stairwall' },
+    { t: 'b', x: -15.8, z: -10, w: 0.4, d: 4, occ: false, h: 2.6, kind: 'stairwall' },
+    { t: 'b', x: 15.8, z: -10, w: 0.4, d: 4, occ: false, h: 2.6, kind: 'stairwall' },
+    { t: 'b', x: 20.2, z: -10, w: 0.4, d: 4, occ: false, h: 2.6, kind: 'stairwall' },
     ...pillars([-18, -13, -8, 8, 13, 18], -20.5, 0.5, 4.4),
     ...pillarsZ(-17.5, [-4, 0, 4, 8, 12, 16]),
     ...pillarsZ(17.5, [-4, 0, 4, 8, 12, 16]),

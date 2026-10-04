@@ -121,7 +121,8 @@ sending them over the network.
 npm install
 npm run dev        # standalone at http://localhost:5181 with bots
 npm test           # unit, property and fuzz tests (node --test): the rules, the crowd, the wire format, the host against
-                   # a stand-in room (host changes in every phase, secrecy, hostile requests), the camera
+                   # a stand-in room (host changes in every phase, secrecy, hostile requests), the camera (kept out of every wall,
+                   # the stage, the roofs and the houses: checked against the plazas' own built scenery, not just their data)
 npm run balance    # headless rounds with bots: the balance table (node scripts/balance.mjs 30 for more rounds)
 npm run build      # dist/
 npm run smoke      # loads dist/ headless with ?test=auto and fails on any error

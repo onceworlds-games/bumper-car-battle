@@ -205,7 +205,7 @@ function piazza(kit, mats, plaza, scene, extra) {
   // The stage: boards, steps, painted curtains and a string of pennants.
   kit.box(mats.plain, WOOD, -27.5, 0, 0, 5, 1.2, 12);
   for (let i = 0; i < 3; i++) kit.box(mats.plain, 0x8c5a38, -24.6 + i * 0.35, 0, 0, 0.5, 0.4 * (3 - i), 4);
-  kit.box(mats.plain, 0x5a2a1e, -29.9, 1.2, 0, 0.3, 5.5, 12.6);
+  for (const w of plaza.walls.filter((o) => o.kind === 'backdrop')) kit.box(mats.plain, 0x5a2a1e, (w.x0 + w.x1) / 2, w.y0, (w.z0 + w.z1) / 2, w.x1 - w.x0, w.y1 - w.y0, w.z1 - w.z0);
   const curtain = new THREE.Mesh(new THREE.PlaneGeometry(11.5, 4.8), mats.curtain);
   curtain.position.set(-29.7, 3.6, 0);
   curtain.rotation.y = Math.PI / 2;
@@ -344,11 +344,13 @@ function palazzo(kit, mats, plaza, scene, extra) {
       kit.box(mats.plain, i % 2 ? 0xe2d4ba : 0xd6c7ab, (rp.x0 + rp.x1) / 2, 0, z, rp.x1 - rp.x0, Math.max(0.05, y), (rp.z1 - rp.z0) / steps + 0.02);
     }
   }
-  for (const w of plaza.obstacles.filter((o) => o.kind === 'stairwall')) kit.box(mats.plain, 0xe9dcc4, w.x, 0, w.z, w.w, 2.6, w.d);
+  for (const w of plaza.obstacles.filter((o) => o.kind === 'stairwall')) kit.box(mats.plain, 0xe9dcc4, w.x, 0, w.z, w.w, w.h, w.d);
   const pil = plaza.obstacles.filter((o) => o.kind === 'pillar');
   arcade(kit, mats, pil.filter((p) => p.z < -15), -22.5, 2.4);
-  galleryZ(kit, mats, pil.filter((p) => p.x < -15), -22);
-  galleryZ(kit, mats, pil.filter((p) => p.x > 15), 22);
+  // (The galleries of the courtyard's two sides: not the terrace's own columns, which have the arcade above, or its roof ran on over
+  // the terrace's ends at a head's height.)
+  galleryZ(kit, mats, pil.filter((p) => p.x < -15 && p.z > -15), -22);
+  galleryZ(kit, mats, pil.filter((p) => p.x > 15 && p.z > -15), 22);
   for (const o of plaza.obstacles) {
     if (o.kind === 'well') {
       // A stone well-head with a wrought-iron arch and a lantern hung from it.
