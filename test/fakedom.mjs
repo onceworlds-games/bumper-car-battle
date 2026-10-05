@@ -83,17 +83,56 @@ export function makeCtx(label = 'ctx') {
   const state = { ...DEFAULTS };
   const bad = [];
   const counts = { calls: 0 };
+  const texts = []; // every fillText of the frame, with where it landed on the screen (css px, from the transform)
   const grad = { addColorStop() {} };
   const note = (what) => {
     if (bad.length < 20) bad.push(what);
   };
+  let m = [1, 0, 0, 1, 0, 0];
+  const stack = [];
+  const mul = (a, b) => [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5]];
+  const px = () => Number(/(\d+(?:\.\d+)?)px/.exec(String(state.font))?.[1] ?? 10);
   const methods = {
-    measureText: (s) => ({ width: String(s).length * 11 }),
+    measureText: (str) => ({ width: String(str).length * px() * 0.68 }),
     createLinearGradient: () => grad,
     createRadialGradient: () => grad,
     getLineDash: () => [],
     isPointInPath: () => false,
     drawImage: () => {},
+    save: () => {
+      stack.push(m.slice());
+      counts.calls++;
+    },
+    restore: () => {
+      if (stack.length) m = stack.pop();
+      counts.calls++;
+    },
+    setTransform: (a, b, c, d, e, f) => {
+      m = [a, b, c, d, e, f];
+      for (const v of [a, b, c, d, e, f]) if (!Number.isFinite(v)) note(`${label}.setTransform has ${v}`);
+    },
+    resetTransform: () => {
+      m = [1, 0, 0, 1, 0, 0];
+    },
+    translate: (x, y) => {
+      if (!Number.isFinite(x) || !Number.isFinite(y)) note(`${label}.translate(${x}, ${y})`);
+      m = mul(m, [1, 0, 0, 1, x, y]);
+    },
+    scale: (x, y) => {
+      if (!Number.isFinite(x) || !Number.isFinite(y)) note(`${label}.scale(${x}, ${y})`);
+      m = mul(m, [x, 0, 0, y, 0, 0]);
+    },
+    rotate: (a) => {
+      if (!Number.isFinite(a)) note(`${label}.rotate(${a})`);
+      m = mul(m, [Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a), 0, 0]);
+    },
+    fillText: (str, x, y) => {
+      counts.calls++;
+      if (typeof str !== 'string' && typeof str !== 'number') note(`${label}.fillText of a non-string`);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) note(`${label}.fillText at (${x}, ${y})`);
+      const k = Math.hypot(m[0], m[1]);
+      texts.push({ text: String(str), x: m[0] * x + m[2] * y + m[4], y: m[1] * x + m[3] * y + m[5], size: px() * k, width: String(str).length * px() * 0.68 * k, align: state.textAlign, alpha: state.globalAlpha });
+    },
   };
   const proxy = new Proxy(
     {},
@@ -101,6 +140,8 @@ export function makeCtx(label = 'ctx') {
       get(_, p) {
         if (p === 'bad') return bad;
         if (p === 'counts') return counts;
+        if (p === 'texts') return texts;
+        if (p === 'depth') return stack.length;
         if (p in methods) return methods[p];
         if (p in state) return state[p];
         return (...args) => {
@@ -109,9 +150,6 @@ export function makeCtx(label = 'ctx') {
           if (p === 'arc' && args[2] < 0) throw new Error(`${label}.arc with a negative radius: ${args.join(', ')}`);
           if (p === 'ellipse' && (args[2] < 0 || args[3] < 0)) throw new Error(`${label}.ellipse with a negative radius: ${args.join(', ')}`);
           if (p === 'arcTo' && args[4] < 0) throw new Error(`${label}.arcTo with a negative radius: ${args.join(', ')}`);
-          if (p === 'fillText' || p === 'strokeText') {
-            if (typeof args[0] !== 'string' && typeof args[0] !== 'number') note(`${label}.${String(p)} of a non-string`);
-          }
         };
       },
       set(_, p, v) {
