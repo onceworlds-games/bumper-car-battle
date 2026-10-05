@@ -55,7 +55,7 @@ function scene(w, h, o) {
 }
 
 function cover(ctx) {
-  const Sc = scene(1280, 720, { cx: 640, cy: 416, scale: 27 });
+  const Sc = scene(1280, 720, { cx: 640, cy: 404, scale: 38 });
   const big = { size: 1.3 };
   const c = (id, ci, x, y, a, set) => car(id, ci, x, y, a, { ...big, ...set });
   // the one that boosts, the one it hits, a crowd, and one flying off the edge into the water
@@ -75,7 +75,7 @@ function cover(ctx) {
   const fx = Sc.fx;
   fx.sparks(-0.6, 1.7, 1, 0, 14);
   fx.sparks(-0.6, 1.7, 1, 0, 14);
-  fx.bonk(-0.6, 0.8, 16, '');
+  fx.bonk(-0.6, 0.8, 7, '');
   fx.splash(12.6, 1.4, 1.2);
   fx.puff(-4.2, 1.7, 5, '#ffd9a0', 1.5);
   fx.update(0.2);
@@ -90,8 +90,7 @@ function action(ctx) {
   Sc.cars = [a, b, car('hero', 3, 2.4, -3.2, 1.1), car('bot4', 8, 3.0, 2.9, -1.3)];
   const fx = Sc.fx;
   for (let i = 0; i < 3; i++) fx.sparks(7.5, 0.05, 1, 0, 22);
-  fx.bonk(7.5, -0.9, 20, '');
-  fx.puff(7.5, 0.1, 6, '#ffffff', 3);
+  // (no BONK cloud here: frozen, it covers the two cars)
   fx.splash(13.2, -2.6, 1.5);
   fx.update(0.12);
   drawWorld(ctx, Sc);
