@@ -7,7 +7,6 @@ export const DARK = '#1b1f3b'; // the outline colour of everything
 export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const easeOutCubic = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
-export const easeInCubic = (t) => Math.pow(clamp(t, 0, 1), 3);
 export const easeInOut = (t) => {
   t = clamp(t, 0, 1);
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -42,11 +41,6 @@ export function shade(hex, amt) {
     shadeCache.set(key, out);
   }
   return out;
-}
-
-export function rgba(hex, a) {
-  const [r, g, b] = hexRgb(hex);
-  return `rgba(${r},${g},${b},${Math.round(clamp(a, 0, 1) * 100) / 100})`;
 }
 
 const fontCache = new Map();

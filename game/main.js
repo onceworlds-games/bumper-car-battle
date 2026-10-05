@@ -1278,7 +1278,7 @@ function run(ow, room, tickable, offline) {
   room.on('starting', () => {
     S.count = -1;
   });
-  room.on('matchend', (match, previous) => {
+  room.on('matchend', (_match, previous) => {
     try {
       room.hideLobby(!S.started);
     } catch {
