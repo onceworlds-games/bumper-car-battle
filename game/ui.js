@@ -49,9 +49,11 @@ export function drawLogo(ctx, cx, cy, size, t, still = false) {
 export function drawTitle(ctx, Sc, t) {
   base(ctx, Sc);
   const { w, h } = Sc;
-  // the logo stays clear of the platform's buttons in the top left corner
-  const logo = Math.min(w * 0.09, h * 0.15, 110, Math.max(20, (w / 2 - 138) / 3.5));
-  drawLogo(ctx, w / 2, Math.max(h * 0.17, logo * 0.9), logo, t);
+  // the logo stays clear of the platform's buttons in the top left corner: if it would touch them, it sits lower
+  const logo = Math.min(w * 0.09, h * 0.15, 110);
+  let ly = h * 0.17;
+  if (w / 2 - 3.5 * logo < 136 && ly - logo * 0.6 < 60) ly = 60 + logo * 0.65;
+  drawLogo(ctx, w / 2, ly, logo, t);
   const bw = clamp(h * 0.62, 190, 320);
   const bh = clamp(h * 0.18, 60, 100);
   const bx = w / 2 - bw / 2;
@@ -95,21 +97,26 @@ export function drawLobbyHud(ctx, Sc, st) {
   const gap = 8;
   const ls = clamp(u * 0.95, 15, 22);
   ctx.font = font(ls);
-  const lw = ctx.measureText('ROUNDS').width;
+  let lw = ctx.measureText('ROUNDS').width;
   const n = st.options.length;
-  const total = 30 + lw + 14 + n * bw + (n - 1) * gap;
   const y = 8;
+  // Narrow screens (a phone held upright) keep to the space right of the platform's buttons: the word goes first, then the buttons shrink.
+  const room = Sc.w - 138 - 8;
+  let bwx = bw;
+  if (30 + lw + 14 + n * bwx + (n - 1) * gap > room) lw = 0;
+  if (lw === 0 && 30 + 6 + n * bwx + (n - 1) * gap > room) bwx = Math.max(40, (room - 36 - (n - 1) * gap) / n);
+  const total = lw > 0 ? 30 + lw + 14 + n * bwx + (n - 1) * gap : 36 + n * bwx + (n - 1) * gap;
   let x = Math.max(Sc.w / 2 - total / 2, 138);
   iconFlag(ctx, x + 12, y + bh / 2, 13);
-  text(ctx, 'ROUNDS', x + 30, y + bh / 2, ls, { align: 'left', lw: ls * 0.26 });
-  x += 30 + lw + 14;
+  if (lw > 0) text(ctx, 'ROUNDS', x + 30, y + bh / 2, ls, { align: 'left', lw: ls * 0.26 });
+  x += lw > 0 ? 30 + lw + 14 : 36;
   rects.rounds.length = 0;
   for (const v of st.options) {
     const sel = v === st.rounds;
-    plate(ctx, x, y, bw, bh, 14, sel ? '#ffe14a' : st.isHost ? '#ffffff' : '#9fb0d8', { shadow: sel ? 5 : 4, shine: sel });
-    text(ctx, String(v), x + bw / 2, y + bh / 2, bh * 0.58, { alpha: sel || st.isHost ? 1 : 0.7 });
-    if (st.isHost) rects.rounds.push({ v, x, y, w: bw, h: bh });
-    x += bw + gap;
+    plate(ctx, x, y, bwx, bh, 14, sel ? '#ffe14a' : st.isHost ? '#ffffff' : '#9fb0d8', { shadow: sel ? 5 : 4, shine: sel });
+    text(ctx, String(v), x + bwx / 2, y + bh / 2, bh * 0.58, { alpha: sel || st.isHost ? 1 : 0.7 });
+    if (st.isHost) rects.rounds.push({ v, x, y, w: bwx, h: bh });
+    x += bwx + gap;
   }
   const hs = clamp(u * 1.2, 18, 30);
   text(ctx, st.hint, Sc.w / 2, y + bh + hs * 1.1, hs, { lw: hs * 0.24 });
@@ -315,7 +322,10 @@ export function drawBoard(ctx, Sc, st) {
   ctx.fillStyle = 'rgba(10,25,70,0.62)';
   ctx.fillRect(0, 0, w, h);
   const hs = clamp(u * 1.7, 22, 40);
-  const hy = clamp(h * 0.1, 30, 56);
+  let hy = clamp(h * 0.1, 30, 56);
+  ctx.font = font(hs);
+  const hw = ctx.measureText(`ROUND ${st.round}`).width;
+  if (w / 2 - hw / 2 < 134 && hy - hs * 0.55 < 58) hy = 58 + hs * 0.6; // not over the platform's buttons on a narrow screen
   text(ctx, `ROUND ${st.round}`, w / 2, hy, hs * easeOutBack(clamp(st.age * 4, 0, 1)), { lw: hs * 0.22, shadow: hs * 0.05 });
   const n = st.rows.length;
   const top = hy + hs * 0.9;
@@ -438,7 +448,7 @@ export function drawPodium(ctx, Sc, st) {
       plate(ctx, x, 10, pw, ph, ph * 0.3, '#ffffff', { shadow: 4, lw: 3 });
       a.icon(ctx, x + ph * 0.5, 10 + ph / 2, ph * 0.3);
       const ls = clamp(ph * 0.28, 11, 15);
-      text(ctx, a.label, x + ph * 0.95, 10 + ph * 0.32, ls, { align: 'left', fill: '#e8283c', stroke: '#ffffff', lw: ls * 0.26 });
+      text(ctx, fit(ctx, a.label, ls, pw - ph * 1.05), x + ph * 0.95, 10 + ph * 0.32, ls, { align: 'left', fill: '#e8283c', stroke: '#ffffff', lw: ls * 0.26 });
       text(ctx, fit(ctx, who.name, ls * 1.15, pw - ph * 1.05), x + ph * 0.95, 10 + ph * 0.72, ls * 1.15, { align: 'left', fill: DARK, stroke: '#ffffff', lw: ls * 0.28 });
       ctx.restore();
       x += pw + 10;

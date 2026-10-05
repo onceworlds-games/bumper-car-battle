@@ -311,8 +311,8 @@ function run(ow, room, tickable, offline) {
 
   function layout(dt) {
     const lobby = S.scene === 'lobby';
-    const top = lobby ? (S.started ? 56 : 0) : 40;
-    const bottom = lobby && S.started ? 46 : 0;
+    const top = lobby ? (S.started ? 46 : 0) : 40;
+    const bottom = lobby && S.started ? 40 : 0;
     const half = lobby ? 13 : 12.5;
     const availH = Math.max(80, Sc.h - top - bottom);
     const scale = Math.min(Sc.w / (half * 2.2), availH / (half * 2));

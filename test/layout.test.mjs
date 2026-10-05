@@ -13,6 +13,8 @@ const SIZES = [
   [844, 390],
   [1280, 720],
   [1024, 768],
+  [375, 667],
+  [390, 844],
 ];
 const NAMES = new Set([...BOT_NAMES, 'You', 'YOU', 'KO!', '+2', 'BONK!', 'BAM!', 'POW!']);
 
