@@ -185,6 +185,19 @@ function badge(ctx, name) {
   void TAU;
 }
 
+/** Waits for the Bungee font: the stylesheet has to arrive (it declares the faces), then the face itself. */
+async function fontReady() {
+  const fonts = document.fonts;
+  if (!fonts) return;
+  try {
+    for (let i = 0; i < 60 && !(fonts.size > 0); i++) await new Promise((resolve) => setTimeout(resolve, 50));
+    await fonts.load('60px Bungee', 'BUMPER CAR BATTLE 1');
+    await fonts.ready;
+  } catch {
+    // the fallback font still draws
+  }
+}
+
 export async function runPoster(name, canvas) {
   const size = SIZES[name];
   const done = () => {
@@ -202,12 +215,7 @@ export async function runPoster(name, canvas) {
   document.body.style.margin = '0';
   document.body.style.overflow = 'hidden';
   const ctx = canvas.getContext('2d');
-  try {
-    await document.fonts.load('60px Bungee');
-    await document.fonts.ready;
-  } catch {
-    // the fallback font still draws
-  }
+  await fontReady();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (name === 'cover') cover(ctx);
   else if (name === 'action') action(ctx);

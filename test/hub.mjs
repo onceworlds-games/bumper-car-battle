@@ -33,6 +33,22 @@ export class Hub {
     return room;
   }
 
+  /** The same player comes back on a fresh page (a reload): the old page's room is dead, the seat and presence are kept. */
+  rejoin(id) {
+    const record = this.players.get(id);
+    const old = this.rooms.get(id);
+    old.closed = true;
+    old.connected = false;
+    delete record.connected;
+    const room = new FakeRoom(this, record);
+    room.state = clone(old.state);
+    // a reloaded page learns what the room has now: take the freshest copy from someone still here
+    for (const [rid, r] of this.rooms) if (rid !== id && !r.closed) room.state = clone(r.state);
+    this.rooms.set(id, room);
+    for (const [rid, r] of this.rooms) if (rid !== id) r.emit('back', record, true);
+    return room;
+  }
+
   later(fn) {
     setTimeout(fn, LATENCY);
   }
@@ -150,6 +166,7 @@ class FakeRoom {
     for (const fn of this.listeners.get(event) ?? []) fn(...args);
   }
   setState(key, value) {
+    if (this.closed) return;
     if (value === null || value === undefined) delete this.state[key];
     else this.state[key] = value;
     const copy = clone(value);
@@ -163,6 +180,7 @@ class FakeRoom {
     }
   }
   setPresence(d) {
+    if (this.closed) return;
     this.me.presence = d;
     const at = T.ms;
     const copy = clone(d);
@@ -188,6 +206,7 @@ class FakeRoom {
     return best.d;
   }
   send(data, { to } = {}) {
+    if (this.closed) return;
     this.hub.sent[data && data.t] = (this.hub.sent[data && data.t] || 0) + 1;
     const copy = clone(data);
     const from = { ...this.me };
@@ -218,7 +237,7 @@ class FakeRoom {
 /** window.onceworlds for one page of the hub: the stand-in SDK, with this player's room. */
 export function owFor(hub, id, name) {
   const ow = makeStubOw();
-  const room = hub.add(id, name);
+  const room = hub.players.has(id) ? hub.rejoin(id) : hub.add(id, name);
   ow.rooms = { async join() { return room; } };
   ow.player.get = async () => ({ id, name, guest: true });
   ow.room = room;

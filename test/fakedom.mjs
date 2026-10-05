@@ -10,9 +10,10 @@ Object.defineProperty(globalThis.performance, 'now', { value: () => T.ms - T0, c
 
 const timers = [];
 let timerId = 1;
+let current = null; // the page whose globals are installed: callbacks registered now belong to it
 globalThis.setTimeout = (fn, ms = 0) => {
   const id = timerId++;
-  timers.push({ id, fn, at: T.ms + ms, every: 0 });
+  timers.push({ id, fn, at: T.ms + ms, every: 0, page: current });
   return id;
 };
 globalThis.clearTimeout = (id) => {
@@ -21,14 +22,14 @@ globalThis.clearTimeout = (id) => {
 };
 globalThis.setInterval = (fn, ms = 0) => {
   const id = timerId++;
-  timers.push({ id, fn, at: T.ms + ms, every: Math.max(1, ms) });
+  timers.push({ id, fn, at: T.ms + ms, every: Math.max(1, ms), page: current });
   return id;
 };
 globalThis.clearInterval = globalThis.clearTimeout;
 
 const rafs = [];
 globalThis.requestAnimationFrame = (cb) => {
-  rafs.push(cb);
+  rafs.push({ cb, page: current });
   return rafs.length;
 };
 
@@ -42,19 +43,30 @@ export function frame(ms = 1000 / 60) {
     if (!due) break;
     if (due.every) due.at += due.every;
     else timers.splice(timers.indexOf(due), 1);
+    if (due.page && due.page.dead) {
+      if (due.every) timers.splice(timers.indexOf(due), 1);
+      continue;
+    }
+    const keep = current;
+    current = due.page;
     try {
       due.fn();
     } catch (e) {
       errors.push(e);
     }
+    current = keep;
   }
   const cbs = rafs.splice(0);
-  for (const cb of cbs) {
+  for (const { cb, page } of cbs) {
+    if (page && page.dead) continue; // a page that was closed (reloaded) stops running
+    const keep = current;
+    current = page;
     try {
       cb(T.ms - T0);
     } catch (e) {
       errors.push(e);
     }
+    current = keep;
   }
 }
 
@@ -223,7 +235,7 @@ export function makePage({ w = 812, h = 375, search = '', onceworlds } = {}) {
   };
   const document = {
     getElementById: () => canvas,
-    fonts: { load: async () => {}, ready: Promise.resolve() },
+    fonts: { size: 1, load: async () => {}, ready: Promise.resolve() },
     body: { dataset: {}, style: {} },
     hidden: false,
     activeElement: null,
@@ -243,8 +255,10 @@ export function makePage({ w = 812, h = 375, search = '', onceworlds } = {}) {
     document,
     window: win,
     audio: audioStats,
+    dead: false,
     /** Make this page's globals the current ones (do it before importing its main.js, and before firing its events). */
     install() {
+      current = page;
       globalThis.window = win;
       globalThis.document = document;
       globalThis.location = { search };

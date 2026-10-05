@@ -33,6 +33,7 @@ async function boot() {
   }
   // Join first, before anything heavy is built, so a reload doesn't miss its seat.
   let room;
+  let offline = standalone;
   try {
     room = await ow.rooms.join({
       maxPlayers: 10,
@@ -43,13 +44,14 @@ async function boot() {
   } catch (err) {
     console.error('could not join a room', err);
     room = standalone ? ow.room : makeStubRoom(() => ow.now());
+    offline = true;
   }
   try {
     document.fonts?.load('40px Bungee');
   } catch {
     // fonts are only for looks
   }
-  run(ow, room, standalone || room.kind === 'solo' ? room : null);
+  run(ow, room, room.kind === 'solo' && typeof room.tick === 'function' ? room : null, offline);
 }
 
 const r1 = (v) => Math.round(v * 10) / 10;
@@ -60,7 +62,7 @@ const QUALITY = { low: 0.4, medium: 0.7, high: 1 };
 const GHOST_SPEED = 3.6;
 const EXTRAP = 0.06; // s: other people's cars are drawn this far ahead along their velocity
 
-function run(ow, room, tickable) {
+function run(ow, room, tickable, offline) {
   const ctx = canvas.getContext('2d');
   const audio = createAudio();
   const input = createInput(ow);
@@ -142,6 +144,7 @@ function run(ow, room, tickable) {
     koOut: null,
     koVal: {},
     errors: 0,
+    lobbySince: -1,
   };
 
   // ---------------------------------------------------------------- saves and badges
@@ -605,7 +608,7 @@ function run(ow, room, tickable) {
   }
 
   function refreshViews(dt, g) {
-    const rt = room.matchNow() - 100;
+    const rt = room.matchNow() - 70; // bots are drawn a little behind the host, between its last two snapshots
     if (g && !room.isHost) readSnaps(g);
     const hide = g && (g.phase === 'board' || g.phase === 'final');
     Sc.cars.length = 0;
@@ -1174,7 +1177,12 @@ function run(ow, room, tickable) {
       const dt = clamp((ts - last) / 1000, 0, 0.1);
       last = ts;
       Sc.time = ts / 1000;
-      if (tickable && tickable.tick) tickable.tick();
+      if (tickable) tickable.tick();
+      // Opened on its own there is no Ready strip: get ready by itself so the whole game can be seen.
+      if (offline && S.started && room.match.phase === 'lobby') {
+        if (S.lobbySince < 0) S.lobbySince = Sc.time;
+        else if (Sc.time - S.lobbySince > 2.5 && !room.me.ready) room.setReady(true);
+      } else S.lobbySince = -1;
       input.poll();
       acc += dt;
       let steps = 0;
