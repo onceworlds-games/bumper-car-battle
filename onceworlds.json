@@ -1,37 +1,20 @@
 {
-  "slug": "carnevale",
-  "name": "Carnevale",
-  "description": "A masked ball where everyone looks alike. Blend in, find your quarry, unmask them. Inspired by SpyParty.",
-  "dir": "dist",
-  "productionBranch": "main",
+  "slug": "bumper-car-battle",
+  "name": "Bumper Car Battle",
+  "description": "Bump everyone off the rink and be the last car standing!",
+  "dir": "game",
   "genre": "Party",
   "icon": "store/icon.png",
-  "thumbnails": ["store/thumb-1.png", "store/thumb-2.png", "store/thumb-3.png", "store/thumb-4.png"],
-  "controls": [
-    { "keys": ["W", "A", "S", "D"], "action": "Walk (arrow keys too)" },
-    { "keys": ["Click"], "action": "Walk there, or mark a figure" },
-    { "keys": ["F"], "action": "Back into step (or tap your shadow)" },
-    { "keys": ["Shift"], "action": "Sprint: quick, loud, costs poise" },
-    { "keys": ["E"], "action": "Unmask the figure in front of you" },
-    { "keys": ["G"], "action": "Greet, or answer a greeting" },
-    { "keys": ["1", "2"], "action": "Your two tricks" },
-    { "keys": ["Space"], "action": "Flourish" },
-    { "keys": ["Tab", "M"], "action": "Map" },
-    { "keys": ["Right drag", "Z", "X"], "action": "Turn the camera" },
-    { "keys": ["Wheel"], "action": "Zoom" },
-    { "keys": ["Esc"], "action": "Close the map" }
-  ],
+  "thumbnails": ["store/thumb-1.png", "store/thumb-2.png", "store/thumb-3.png"],
   "badges": [
-    { "id": "first-unmask", "name": "First Unmask", "description": "Unmask your quarry.", "icon": "store/badges/first-unmask.png" },
-    { "id": "faux-pas", "name": "Faux Pas", "description": "Unmask a reveller who was only a reveller.", "icon": "store/badges/faux-pas.png" },
-    { "id": "ghost", "name": "Ghost", "description": "Finish a round of Masquerade without being unmasked.", "icon": "store/badges/ghost.png" },
-    { "id": "hush-hero", "name": "Hush Hero", "description": "Unmask someone in the Hush, after midnight strikes.", "icon": "store/badges/hush-hero.png" },
-    { "id": "close-call", "name": "Close Call", "description": "Your pursuer blunders right beside you.", "icon": "store/badges/close-call.png" },
-    { "id": "master-of-disguise", "name": "Master of Disguise", "description": "Hunt for a whole minute without getting flustered.", "icon": "store/badges/master-of-disguise.png" },
-    { "id": "sharp-eye", "name": "Sharp Eye", "description": "Five unmasks in one match without a single faux pas.", "icon": "store/badges/sharp-eye.png" },
-    { "id": "case-closed", "name": "Case Closed", "description": "Solve Spot the Mask against Master impostors.", "icon": "store/badges/case-closed.png" },
-    { "id": "full-house", "name": "Full House", "description": "Play a round with ten players.", "icon": "store/badges/full-house.png" },
-    { "id": "level-10", "name": "Level 10", "description": "Reach level ten.", "icon": "store/badges/level-10.png" },
-    { "id": "bait", "name": "Bait", "description": "Someone unmasks your decoy.", "icon": "store/badges/bait.png" }
+    { "id": "first-win", "name": "First Win", "description": "Win a match.", "icon": "store/badge-first-win.png" },
+    { "id": "knockout-king", "name": "Knockout King", "description": "Knock out 3 cars in one round.", "icon": "store/badge-knockout-king.png" },
+    { "id": "last-second", "name": "Last Second", "description": "Win a round with the rink at its smallest size.", "icon": "store/badge-last-second.png" },
+    { "id": "road-trip", "name": "Road Trip", "description": "Play 10 matches.", "icon": "store/badge-road-trip.png" }
+  ],
+  "controls": [
+    { "keys": ["W", "A", "S", "D"], "action": "Drive" },
+    { "keys": ["Arrows"], "action": "Drive" },
+    { "keys": ["Space"], "action": "Boost" }
   ]
 }
