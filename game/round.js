@@ -128,8 +128,10 @@ export class Round {
     }
   }
 
-  // An out bot swims to the water beside the rink and floats there.
+  // An out bot swims to the water beside the rink and floats there (after the second its fall takes to be shown).
   _ghost(c, dt, R) {
+    const rec = this.out.get(c.id);
+    if (rec && this.t - rec.at < 1000) return;
     const r = Math.hypot(c.x, c.y);
     const ang = Math.atan2(c.y, c.x) + (c.idx % 2 ? 1 : -1) * 0.1 * dt;
     const target = Math.min(R + 1.6 + (c.idx % 3) * 0.5, 12.3);
@@ -227,7 +229,10 @@ export class Round {
     const p = [];
     for (const c of this.cars) {
       if (c.kind !== 'bot') continue;
-      p.push([r1(c.x), r1(c.y), r1(c.vx), r1(c.vy), r2(c.a), (c.out ? 1 : 0) | (c.heavy > 0 ? 2 : 0)]);
+      // a bot that has just fallen keeps the speed it went over the edge with, so other pages can show the fall
+      const rec = c.out ? this.out.get(c.id) : null;
+      const fresh = rec && this.t - rec.at < 1000;
+      p.push([r1(c.x), r1(c.y), r1(fresh ? rec.vx : c.vx), r1(fresh ? rec.vy : c.vy), r2(c.a), (c.out ? 1 : 0) | (c.heavy > 0 ? 2 : 0)]);
     }
     return p;
   }

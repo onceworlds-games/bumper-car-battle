@@ -2,7 +2,7 @@
 // A bot thinks every 0.2-0.4 s (its reaction time), stays off the edge, lines up behind a car so a hit pushes it
 // outward, and boosts when it is close and pointing at it. Weaker bots aim worse and boost at the wrong moments.
 
-import { wrapAngle } from './sim.js';
+import { clamp, wrapAngle } from './sim.js';
 
 /** A bot's character, from the round's random numbers (idx only varies the stream). */
 export function newAI(rng, idx) {
@@ -126,7 +126,9 @@ export function botInput(c, round, dt, R) {
   inp.boost = false;
   inp.steer = 0;
   // Near the edge it forgets everything else: turn to the middle, and brake if it is sliding out backwards-ish.
-  if (R - r < ai.edge + 0.3 * Math.max(0, vout)) {
+  // The rubber ring catches anything slow, so on a small rink there is much less to be afraid of.
+  const room = clamp((R - 3) / 8, 0.3, 1);
+  if (R - r < (ai.edge + 0.3 * Math.max(0, vout)) * room) {
     inp.aim = Math.atan2(-c.y, -c.x);
     const facingOut = Math.cos(c.a) * nx + Math.sin(c.a) * ny > 0.5;
     inp.thr = vout > 2.5 && facingOut ? -1 : 1;
@@ -144,8 +146,8 @@ export function botInput(c, round, dt, R) {
     const d = Math.hypot(tx, ty);
     const err = Math.abs(wrapAngle(Math.atan2(ty, tx) - c.a));
     if (d < 3.5 && err < ai.boostAngle) {
-      // Would the lunge carry it over the edge? Careful bots wait for a better angle.
-      const safe = Math.hypot(c.x + Math.cos(c.a) * 3.2, c.y + Math.sin(c.a) * 3.2) < R - 0.8;
+      // Would the lunge carry it over the edge (the target's spot and a little past it)? Careful bots wait for a better angle.
+      const safe = Math.hypot(c.x + Math.cos(c.a) * (d + 0.6), c.y + Math.sin(c.a) * (d + 0.6)) < R - 0.3;
       if (safe || ai.rash) {
         ai.fireT += dt;
         if (ai.fireT >= ai.fireDelay) {
